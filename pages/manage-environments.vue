@@ -10,7 +10,13 @@
       </NuxtLink>
       <h1 class="text-3xl font-bold">Manage Environments</h1>
     </div>
-    <div class="bg-white rounded shadow p-6">
+    <div v-if="environmentsStore.loading" class="flex justify-center items-center min-h-[200px]">
+      <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+      </svg>
+    </div>
+    <div v-else class="bg-white rounded shadow p-6">
       <div class="flex items-center mb-4">
         <h3 class="text-xl font-semibold flex-1">Environments</h3>
         <input v-model="filter" class="border rounded px-2 py-1 text-sm ml-4 w-64" placeholder="Quick filter by name or tag" />
@@ -51,33 +57,41 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useEnvironmentsStore } from '~/stores/environments'
+import type { Environment } from '~/stores/environments'
 const environmentsStore = useEnvironmentsStore()
-const environments = environmentsStore.environments
+const environments = ref<Environment[]>([])
+// Removed: const loading = ref(false)
+
 const newEnvName = ref('')
 const newEnvTagsInput = ref('')
 const editingEnvId = ref('')
 const editEnvName = ref('')
 const editEnvTagsInput = ref('')
 const filter = ref('')
+
+onMounted(async () => {
+  await environmentsStore.fetchEnvironments()
+  environments.value = environmentsStore.environments
+})
+
 const allTags = computed(() => {
   const tags = new Set<string>()
-  environments.forEach(e => (e.tags || []).forEach(t => tags.add(t)))
+  environments.value.forEach((e: Environment) => (e.tags || []).forEach((t: string) => tags.add(t)))
   return Array.from(tags).sort()
 })
 const filteredEnvs = computed(() => {
-  if (!filter.value.trim()) return environments
+  if (!filter.value.trim()) return environments.value
   const f = filter.value.trim().toLowerCase()
-  return environments.filter(e =>
+  return environments.value.filter((e: Environment) =>
     e.name.toLowerCase().includes(f) ||
-    (e.tags && e.tags.some(tag => tag.toLowerCase().includes(f)))
+    (e.tags && e.tags.some((tag: string) => tag.toLowerCase().includes(f)))
   )
 })
 // Autocomplete for new tags
 const newTagSuggestions = ref<string[]>([])
 function onNewTagInput() {
-  // Always show suggestions for the current word being typed
   const input = newEnvTagsInput.value.split(',').pop()?.trim().toLowerCase() || ''
   newTagSuggestions.value = input
     ? allTags.value.filter(tag => tag.toLowerCase().startsWith(input) && !newEnvTagsInput.value.split(',').map(t => t.trim().toLowerCase()).includes(tag.toLowerCase()))
@@ -92,7 +106,6 @@ function addNewTagSuggestion(tag: string) {
 // Autocomplete for edit tags
 const editTagSuggestions = ref<string[]>([])
 function onEditTagInput() {
-  // Always show suggestions for the current word being typed
   const input = editEnvTagsInput.value.split(',').pop()?.trim().toLowerCase() || ''
   editTagSuggestions.value = input
     ? allTags.value.filter(tag => tag.toLowerCase().startsWith(input) && !editEnvTagsInput.value.split(',').map(t => t.trim().toLowerCase()).includes(tag.toLowerCase()))
@@ -104,22 +117,26 @@ function addEditTagSuggestion(tag: string) {
   editEnvTagsInput.value = tags.join(', ') + ', '
   editTagSuggestions.value = []
 }
-function addEnv() {
+async function addEnv() {
   if (!newEnvName.value.trim()) return
   const tags = newEnvTagsInput.value.split(',').map(t => t.trim()).filter(Boolean)
-  environmentsStore.addEnvironment({ id: 'env-' + Math.random().toString(36).slice(2), name: newEnvName.value.trim(), tags })
+  await environmentsStore.addEnvironment({ id: 'env-' + Math.random().toString(36).slice(2), name: newEnvName.value.trim(), tags })
+  await environmentsStore.fetchEnvironments()
+  environments.value = environmentsStore.environments
   newEnvName.value = ''
   newEnvTagsInput.value = ''
 }
-function startEnvEdit(env: any) {
+function startEnvEdit(env: Environment) {
   editingEnvId.value = env.id
   editEnvName.value = env.name
   editEnvTagsInput.value = (env.tags || []).join(', ')
 }
-function saveEnvEdit(env: any) {
+async function saveEnvEdit(env: Environment) {
   if (!editEnvName.value.trim()) return
   const tags = editEnvTagsInput.value.split(',').map(t => t.trim()).filter(Boolean)
-  environmentsStore.updateEnvironment(env.id, { name: editEnvName.value.trim(), tags })
+  await environmentsStore.updateEnvironment(env.id, { name: editEnvName.value.trim(), tags })
+  await environmentsStore.fetchEnvironments()
+  environments.value = environmentsStore.environments
   editingEnvId.value = ''
   editEnvName.value = ''
   editEnvTagsInput.value = ''
@@ -129,7 +146,9 @@ function cancelEnvEdit() {
   editEnvName.value = ''
   editEnvTagsInput.value = ''
 }
-function deleteEnv(id: string) {
-  environmentsStore.removeEnvironment(id)
+async function deleteEnv(id: string) {
+  await environmentsStore.removeEnvironment(id)
+  await environmentsStore.fetchEnvironments()
+  environments.value = environmentsStore.environments
 }
 </script> 

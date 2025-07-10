@@ -10,7 +10,13 @@
       </NuxtLink>
       <h1 class="text-3xl font-bold">Manage Applications</h1>
     </div>
-    <div class="bg-white rounded shadow p-6">
+    <div v-if="applicationsStore.loading" class="flex justify-center items-center min-h-[200px]">
+      <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+      </svg>
+    </div>
+    <div v-else class="bg-white rounded shadow p-6">
       <div class="flex items-center mb-4">
         <h3 class="text-xl font-semibold flex-1">Applications</h3>
         <input v-model="filter" class="border rounded px-2 py-1 text-sm ml-4 w-64" placeholder="Quick filter by name or tag" />
@@ -51,33 +57,41 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useApplicationsStore } from '~/stores/applications'
+import type { Application } from '~/stores/applications'
 const applicationsStore = useApplicationsStore()
-const applications = applicationsStore.applications
+const applications = ref<Application[]>([])
+// Removed: const loading = ref(false)
+
 const newAppName = ref('')
 const newAppTagsInput = ref('')
 const editingAppId = ref('')
 const editAppName = ref('')
 const editAppTagsInput = ref('')
 const filter = ref('')
+
+onMounted(async () => {
+  await applicationsStore.fetchApplications()
+  applications.value = applicationsStore.applications
+})
+
 const allTags = computed(() => {
   const tags = new Set<string>()
-  applications.forEach(a => (a.tags || []).forEach(t => tags.add(t)))
+  applications.value.forEach((a: Application) => (a.tags || []).forEach((t: string) => tags.add(t)))
   return Array.from(tags).sort()
 })
 const filteredApps = computed(() => {
-  if (!filter.value.trim()) return applications
+  if (!filter.value.trim()) return applications.value
   const f = filter.value.trim().toLowerCase()
-  return applications.filter(a =>
+  return applications.value.filter((a: Application) =>
     a.name.toLowerCase().includes(f) ||
-    (a.tags && a.tags.some(tag => tag.toLowerCase().includes(f)))
+    (a.tags && a.tags.some((tag: string) => tag.toLowerCase().includes(f)))
   )
 })
 // Autocomplete for new tags
 const newTagSuggestions = ref<string[]>([])
 function onNewTagInput() {
-  // Always show suggestions for the current word being typed
   const input = newAppTagsInput.value.split(',').pop()?.trim().toLowerCase() || ''
   newTagSuggestions.value = input
     ? allTags.value.filter(tag => tag.toLowerCase().startsWith(input) && !newAppTagsInput.value.split(',').map(t => t.trim().toLowerCase()).includes(tag.toLowerCase()))
@@ -92,7 +106,6 @@ function addNewTagSuggestion(tag: string) {
 // Autocomplete for edit tags
 const editTagSuggestions = ref<string[]>([])
 function onEditTagInput() {
-  // Always show suggestions for the current word being typed
   const input = editAppTagsInput.value.split(',').pop()?.trim().toLowerCase() || ''
   editTagSuggestions.value = input
     ? allTags.value.filter(tag => tag.toLowerCase().startsWith(input) && !editAppTagsInput.value.split(',').map(t => t.trim().toLowerCase()).includes(tag.toLowerCase()))
@@ -104,22 +117,26 @@ function addEditTagSuggestion(tag: string) {
   editAppTagsInput.value = tags.join(', ') + ', '
   editTagSuggestions.value = []
 }
-function addApp() {
+async function addApp() {
   if (!newAppName.value.trim()) return
   const tags = newAppTagsInput.value.split(',').map(t => t.trim()).filter(Boolean)
-  applicationsStore.addApplication({ id: 'app-' + Math.random().toString(36).slice(2), name: newAppName.value.trim(), versions: [], tags })
+  await applicationsStore.addApplication({ id: 'app-' + Math.random().toString(36).slice(2), name: newAppName.value.trim(), versions: [], tags })
+  await applicationsStore.fetchApplications()
+  applications.value = applicationsStore.applications
   newAppName.value = ''
   newAppTagsInput.value = ''
 }
-function startAppEdit(app: any) {
+function startAppEdit(app: Application) {
   editingAppId.value = app.id
   editAppName.value = app.name
   editAppTagsInput.value = (app.tags || []).join(', ')
 }
-function saveAppEdit(app: any) {
+async function saveAppEdit(app: Application) {
   if (!editAppName.value.trim()) return
   const tags = editAppTagsInput.value.split(',').map(t => t.trim()).filter(Boolean)
-  applicationsStore.updateApplication(app.id, { name: editAppName.value.trim(), tags })
+  await applicationsStore.updateApplication(app.id, { name: editAppName.value.trim(), tags })
+  await applicationsStore.fetchApplications()
+  applications.value = applicationsStore.applications
   editingAppId.value = ''
   editAppName.value = ''
   editAppTagsInput.value = ''
@@ -129,7 +146,9 @@ function cancelAppEdit() {
   editAppName.value = ''
   editAppTagsInput.value = ''
 }
-function deleteApp(id: string) {
-  applicationsStore.removeApplication(id)
+async function deleteApp(id: string) {
+  await applicationsStore.removeApplication(id)
+  await applicationsStore.fetchApplications()
+  applications.value = applicationsStore.applications
 }
 </script> 

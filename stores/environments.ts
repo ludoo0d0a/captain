@@ -7,34 +7,31 @@ export type Environment = {
   tags?: string[]
 }
 
-const MOCK_ENVS: Environment[] = [
-  { id: 'env1', name: 'Staging', servers: ['staging-1', 'staging-2'], tags: ['test', 'preprod'] },
-  { id: 'env2', name: 'Production', servers: ['prod-1'], tags: ['prod', 'live'] },
-  { id: 'env3', name: 'QA', servers: ['qa-1'], tags: ['qa', 'test'] },
-]
-
-function getInitialEnvironments() {
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('environments')
-    if (stored) return JSON.parse(stored)
-  }
-  return MOCK_ENVS
-}
-
 export const useEnvironmentsStore = defineStore('environments', {
   state: () => ({
-    environments: getInitialEnvironments() as Environment[],
+    environments: [] as Environment[],
+    loading: false as boolean,
   }),
   actions: {
-    addEnvironment(env: Environment) {
-      this.environments.push(env)
+    async fetchEnvironments() {
+      this.loading = true
+      this.environments = await $fetch('/api/environments')
+      this.loading = false
     },
-    updateEnvironment(id: string, data: Partial<Environment>) {
+    async addEnvironment(env: Environment) {
+      await $fetch('/api/environments', { method: 'POST', body: env })
+      await this.fetchEnvironments()
+    },
+    async updateEnvironment(id: string, data: Partial<Environment>) {
       const env = this.environments.find(e => e.id === id)
-      if (env) Object.assign(env, data)
+      if (env) {
+        await $fetch('/api/environments', { method: 'POST', body: { ...env, ...data } })
+        await this.fetchEnvironments()
+      }
     },
-    removeEnvironment(id: string) {
-      this.environments = this.environments.filter(e => e.id !== id)
+    async removeEnvironment(id: string) {
+      await $fetch('/api/environments', { method: 'DELETE', body: { id } })
+      await this.fetchEnvironments()
     },
   },
 }) 

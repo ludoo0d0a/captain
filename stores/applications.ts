@@ -4,38 +4,36 @@ export type Application = {
   id: string
   name: string
   description?: string
-  versions: string[] // array of Version IDs
+  versions?: string[] // array of Version IDs (optional, not in DB)
   tags?: string[]
-}
-
-const MOCK_APPS: Application[] = [
-  { id: 'app1', name: 'Frontend', description: 'User-facing web app', versions: ['ver1', 'ver2', 'ver3'], tags: ['web', 'ui'] },
-  { id: 'app2', name: 'Backend', description: 'API server', versions: ['ver4', 'ver5'], tags: ['api', 'core'] },
-  { id: 'app3', name: 'Worker', description: 'Background jobs', versions: ['ver6'], tags: ['jobs', 'async'] },
-]
-
-function getInitialApplications() {
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('applications')
-    if (stored) return JSON.parse(stored)
-  }
-  return MOCK_APPS
 }
 
 export const useApplicationsStore = defineStore('applications', {
   state: () => ({
-    applications: getInitialApplications() as Application[],
+    applications: [] as Application[],
+    loading: false as boolean,
   }),
   actions: {
-    addApplication(app: Application) {
-      this.applications.push(app)
+    async fetchApplications() {
+      this.loading = true
+      this.applications = await $fetch('/api/applications')
+      this.loading = false
     },
-    updateApplication(id: string, data: Partial<Application>) {
+    async addApplication(app: Application) {
+      await $fetch('/api/applications', { method: 'POST', body: app })
+      await this.fetchApplications()
+    },
+    async updateApplication(id: string, data: Partial<Application>) {
+      // For now, just re-add (no PATCH route yet)
       const app = this.applications.find(a => a.id === id)
-      if (app) Object.assign(app, data)
+      if (app) {
+        await $fetch('/api/applications', { method: 'POST', body: { ...app, ...data } })
+        await this.fetchApplications()
+      }
     },
-    removeApplication(id: string) {
-      this.applications = this.applications.filter(a => a.id !== id)
+    async removeApplication(id: string) {
+      await $fetch('/api/applications', { method: 'DELETE', body: { id } })
+      await this.fetchApplications()
     },
   },
 }) 
