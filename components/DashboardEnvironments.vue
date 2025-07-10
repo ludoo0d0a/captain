@@ -1,65 +1,77 @@
 <template>
-  <div class="space-y-6">
-    <h2 class="text-2xl font-bold">Environments Overview</h2>
-    <div class="overflow-x-auto">
-      <table class="min-w-full bg-white rounded shadow text-sm">
-        <thead>
-          <tr>
-            <th class="px-4 py-2 text-left font-semibold">Application</th>
-            <th v-for="env in environments" :key="env.id" class="px-4 py-2 text-left font-semibold">
-              {{ env.name }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="app in applications" :key="app.id" class="border-t">
-            <td class="px-4 py-2 font-medium">{{ app.name }}</td>
-            <td v-for="env in environments" :key="env.id" class="px-4 py-2">
-              <template v-if="getDeployment(app.id, env.id)">
-                <span class="inline-flex items-center gap-2">
-                  <span :class="[isSnapshot(getDeployment(app.id, env.id)?.versionId) ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800', 'px-2 py-1 rounded text-xs font-mono']">
-                    {{ getVersionName(getDeployment(app.id, env.id)?.versionId) }}
+  <div>
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-2xl font-bold">Environments</h1>
+      <NuxtLink to="/manage-environments" class="ml-auto">
+        <button class="p-2 rounded hover:bg-gray-100" title="Manage Environments">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+      </NuxtLink>
+    </div>
+    <div class="space-y-6">
+      <h2 class="text-2xl font-bold">Environments Overview</h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white rounded shadow text-sm">
+          <thead>
+            <tr>
+              <th class="px-4 py-2 text-left font-semibold">Application</th>
+              <th v-for="env in environments" :key="env.id" class="px-4 py-2 text-left font-semibold">
+                {{ env.name }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="app in applications" :key="app.id" class="border-t">
+              <td class="px-4 py-2 font-medium">{{ app.name }}</td>
+              <td v-for="env in environments" :key="env.id" class="px-4 py-2">
+                <template v-if="getDeployment(app.id, env.id)">
+                  <span class="inline-flex items-center gap-2">
+                    <span :class="[isSnapshot(getDeployment(app.id, env.id)?.versionId) ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800', 'px-2 py-1 rounded text-xs font-mono']">
+                      {{ getVersionName(getDeployment(app.id, env.id)?.versionId) }}
+                    </span>
+                    <span :class="statusBadge(getDeployment(app.id, env.id)?.status)">
+                      {{ getDeployment(app.id, env.id)?.status }}
+                    </span>
                   </span>
-                  <span :class="statusBadge(getDeployment(app.id, env.id)?.status)">
-                    {{ getDeployment(app.id, env.id)?.status }}
-                  </span>
-                </span>
-                <!-- Deploy icon -->
-                <NuxtLink :to="{ path: '/deploy', query: { appId: app.id, envId: env.id } }" title="Deploy new version">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500 hover:text-blue-700 inline ml-2 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                  </svg>
-                </NuxtLink>
-                <!-- Promote icon (if promotable) -->
-                <template v-if="getPromotable(app.id, env.id).length">
-                  <NuxtLink :to="{ path: '/promote', query: { appId: app.id, envId: env.id } }" title="Promote version from another environment">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500 hover:text-green-700 inline ml-2 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                  <!-- Deploy icon -->
+                  <NuxtLink :to="{ path: '/deploy', query: { appId: app.id, envId: env.id } }" title="Deploy new version">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500 hover:text-blue-700 inline ml-2 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
                   </NuxtLink>
+                  <!-- Promote icon (if promotable) -->
+                  <template v-if="getPromotable(app.id, env.id).length">
+                    <NuxtLink :to="{ path: '/promote', query: { appId: app.id, envId: env.id } }" title="Promote version from another environment">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500 hover:text-green-700 inline ml-2 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                      </svg>
+                    </NuxtLink>
+                  </template>
                 </template>
-              </template>
-              <template v-else>
-                <span class="text-gray-300">—</span>
-                <!-- Deploy icon -->
-                <NuxtLink :to="{ path: '/deploy', query: { appId: app.id, envId: env.id } }" title="Deploy new version">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500 hover:text-blue-700 inline ml-2 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                  </svg>
-                </NuxtLink>
-                <!-- Promote icon (if promotable) -->
-                <template v-if="getPromotable(app.id, env.id).length">
-                  <NuxtLink :to="{ path: '/promote', query: { appId: app.id, envId: env.id } }" title="Promote version from another environment">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500 hover:text-green-700 inline ml-2 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                <template v-else>
+                  <span class="text-gray-300">—</span>
+                  <!-- Deploy icon -->
+                  <NuxtLink :to="{ path: '/deploy', query: { appId: app.id, envId: env.id } }" title="Deploy new version">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500 hover:text-blue-700 inline ml-2 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
                   </NuxtLink>
+                  <!-- Promote icon (if promotable) -->
+                  <template v-if="getPromotable(app.id, env.id).length">
+                    <NuxtLink :to="{ path: '/promote', query: { appId: app.id, envId: env.id } }" title="Promote version from another environment">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500 hover:text-green-700 inline ml-2 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                      </svg>
+                    </NuxtLink>
+                  </template>
                 </template>
-              </template>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>

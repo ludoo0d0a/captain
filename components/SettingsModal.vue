@@ -8,38 +8,6 @@
         </svg>
       </button>
       <h2 class="text-xl font-bold mb-4">Settings</h2>
-      <div class="mb-6">
-        <h3 class="text-lg font-semibold mb-2">Applications</h3>
-        <ul class="divide-y mb-2">
-          <li v-for="app in applications" :key="app.id" class="py-2 flex items-center gap-2">
-            <input v-if="editingAppId === app.id" v-model="editAppName" class="border rounded px-2 py-1 text-sm flex-1" @keyup.enter="saveAppEdit(app)" />
-            <span v-else class="flex-1">{{ app.name }}</span>
-            <button v-if="editingAppId !== app.id" class="text-xs text-blue-600" @click="startAppEdit(app)">Rename</button>
-            <button v-if="editingAppId === app.id" class="text-xs text-green-600" @click="saveAppEdit(app)">Save</button>
-            <button v-if="editingAppId === app.id" class="text-xs text-gray-500" @click="cancelAppEdit">Cancel</button>
-            <button class="text-xs text-red-600" @click="deleteApp(app.id)">Delete</button>
-          </li>
-        </ul>
-        <div class="flex gap-2 mb-4">
-          <input v-model="newAppName" class="border rounded px-2 py-1 text-sm flex-1" placeholder="New application name" @keyup.enter="addApp" />
-          <button class="bg-blue-500 text-white px-3 py-1 rounded text-sm" @click="addApp">Add</button>
-        </div>
-        <h3 class="text-lg font-semibold mb-2">Environments</h3>
-        <ul class="divide-y mb-2">
-          <li v-for="env in environments" :key="env.id" class="py-2 flex items-center gap-2">
-            <input v-if="editingEnvId === env.id" v-model="editEnvName" class="border rounded px-2 py-1 text-sm flex-1" @keyup.enter="saveEnvEdit(env)" />
-            <span v-else class="flex-1">{{ env.name }}</span>
-            <button v-if="editingEnvId !== env.id" class="text-xs text-blue-600" @click="startEnvEdit(env)">Rename</button>
-            <button v-if="editingEnvId === env.id" class="text-xs text-green-600" @click="saveEnvEdit(env)">Save</button>
-            <button v-if="editingEnvId === env.id" class="text-xs text-gray-500" @click="cancelEnvEdit">Cancel</button>
-            <button class="text-xs text-red-600" @click="deleteEnv(env.id)">Delete</button>
-          </li>
-        </ul>
-        <div class="flex gap-2 mb-4">
-          <input v-model="newEnvName" class="border rounded px-2 py-1 text-sm flex-1" placeholder="New environment name" @keyup.enter="addEnv" />
-          <button class="bg-blue-500 text-white px-3 py-1 rounded text-sm" @click="addEnv">Add</button>
-        </div>
-      </div>
       <div>
         <h3 class="text-lg font-semibold mb-2">Connectors</h3>
         <ul class="divide-y">
