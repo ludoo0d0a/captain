@@ -148,6 +148,44 @@ class HttpConnector implements Connector {
   }
 }
 
+class XLDeployConnector implements Connector {
+  id = 'xldeploy'
+  name = 'XL Deploy'
+  type = 'XL Deploy'
+  status: 'connected' | 'disconnected' = 'connected'
+  baseUrl: string
+  username: string
+  password: string
+  constructor(baseUrl: string, username: string, password: string) {
+    this.baseUrl = baseUrl
+    this.username = username
+    this.password = password
+  }
+  async refresh(scope: { appId?: string; envId?: string }): Promise<ConnectorRefreshResult> {
+    await new Promise(r => setTimeout(r, 500))
+    return {
+      connectorId: this.id,
+      scope,
+      data: {
+        applications: [
+          { id: 'appXL', name: 'XL App', env: scope.envId, description: 'Fetched from XL Deploy', tags: ['xldeploy'] },
+        ],
+      },
+      success: true,
+      message: `Fetched applications for env ${scope.envId} from XL Deploy`,
+    }
+  }
+  async deploy(params: { appId: string; envId: string; versionId: string }): Promise<ConnectorDeployResult> {
+    await new Promise(r => setTimeout(r, 500))
+    return {
+      connectorId: this.id,
+      ...params,
+      success: true,
+      message: `XL Deploy deployed version ${params.versionId} to ${params.envId}`,
+    }
+  }
+}
+
 export const useConnectorsStore = defineStore('connectors', {
   state: () => ({
     connectors: [
@@ -155,6 +193,7 @@ export const useConnectorsStore = defineStore('connectors', {
       new JenkinsConnector(),
       new SSHConnector(),
       new HttpConnector('https://api.example.com', 'user', 'pass'),
+      new XLDeployConnector('https://xldeploy.example.com', 'xluser', 'xlpass'),
     ] as Connector[],
   }),
   actions: {

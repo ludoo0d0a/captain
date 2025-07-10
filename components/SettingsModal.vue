@@ -27,6 +27,18 @@
                 </label>
                 <button class="mt-1 px-3 py-1 rounded text-xs font-semibold bg-blue-500 text-white" @click="saveHttpConfig">Save</button>
               </div>
+              <div v-if="connector.id === 'xldeploy'" class="mt-2 space-y-2">
+                <label class="block text-xs font-semibold">Base URL
+                  <input v-model="xlUrl" class="border rounded px-2 py-1 text-xs w-64 mt-1" placeholder="https://xldeploy.example.com" />
+                </label>
+                <label class="block text-xs font-semibold">Username
+                  <input v-model="xlUser" class="border rounded px-2 py-1 text-xs w-64 mt-1" placeholder="Username" />
+                </label>
+                <label class="block text-xs font-semibold">Password
+                  <input v-model="xlPass" type="password" class="border rounded px-2 py-1 text-xs w-64 mt-1" placeholder="Password" />
+                </label>
+                <button class="mt-1 px-3 py-1 rounded text-xs font-semibold bg-blue-500 text-white" @click="saveXLConfig">Save</button>
+              </div>
             </div>
             <div class="flex items-center gap-2">
               <span v-if="connector.status === 'connected'" class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold bg-green-200 text-green-700">
@@ -121,6 +133,19 @@ function saveHttpConfig() {
     c.baseUrl = httpUrl.value
     c.username = httpUser.value
     c.password = httpPass.value
+  }
+}
+
+const xlConnector = connectors.find(c => c.id === 'xldeploy')
+const xlUrl = ref(xlConnector && 'baseUrl' in xlConnector ? xlConnector.baseUrl : '')
+const xlUser = ref(xlConnector && 'username' in xlConnector ? xlConnector.username : '')
+const xlPass = ref(xlConnector && 'password' in xlConnector ? xlConnector.password : '')
+function saveXLConfig() {
+  const c = connectors.find(c => c.id === 'xldeploy')
+  if (c && 'baseUrl' in c && 'username' in c && 'password' in c) {
+    c.baseUrl = xlUrl.value
+    c.username = xlUser.value
+    c.password = xlPass.value
   }
 }
 
