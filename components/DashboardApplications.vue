@@ -2,13 +2,21 @@
   <div>
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-2xl font-bold">Applications</h1>
-      <NuxtLink to="/manage-applications" class="ml-auto">
-        <button class="p-2 rounded hover:bg-gray-100" title="Manage Applications">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      <div class="flex items-center gap-2">
+        <button @click="refreshAll" :disabled="refreshingAll" class="p-2 rounded hover:bg-gray-100" title="Refresh all applications">
+          <svg v-if="!refreshingAll" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 12l1.5 1.5m0 0l1.5-1.5m-1.5 1.5V6.75A2.25 2.25 0 016.75 4.5h10.5A2.25 2.25 0 0119.5 6.75v10.5A2.25 2.25 0 0117.25 19.5H6.75A2.25 2.25 0 014.5 17.25V13.5" />
           </svg>
+          <svg v-else class="animate-spin h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
         </button>
-      </NuxtLink>
+        <NuxtLink to="/manage-applications">
+          <button class="p-2 rounded hover:bg-gray-100" title="Manage Applications">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </NuxtLink>
+      </div>
     </div>
     <div class="flex flex-col mb-4 gap-2">
       <div class="flex items-center">
@@ -27,7 +35,14 @@
         <div v-for="app in filteredApps" :key="app.id" class="bg-white rounded shadow p-6 flex flex-col">
           <div class="flex items-center justify-between mb-2">
             <div class="text-lg font-semibold">{{ app.name }}</div>
-            <div class="text-xs text-gray-400">{{ app.description }}</div>
+            <div class="flex items-center gap-2">
+              <button @click="refreshApp(app)" :disabled="refreshingAppId === app.id" class="p-1 rounded hover:bg-gray-100" title="Refresh application">
+                <svg v-if="refreshingAppId !== app.id" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 12l1.5 1.5m0 0l1.5-1.5m-1.5 1.5V6.75A2.25 2.25 0 016.75 4.5h10.5A2.25 2.25 0 0119.5 6.75v10.5A2.25 2.25 0 0117.25 19.5H6.75A2.25 2.25 0 014.5 17.25V13.5" />
+                </svg>
+                <svg v-else class="animate-spin h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
+              </button>
+            </div>
           </div>
           <div class="mb-2">
             <TagBadge v-for="tag in app.tags || []" :key="tag" :tag="tag" class="mr-1" />
@@ -91,19 +106,46 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, inject } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useApplicationsStore } from '~/stores/applications'
 import { useEnvironmentsStore } from '~/stores/environments'
 import { useDeploymentsStore } from '~/stores/deployments'
 import { useVersionsStore } from '~/stores/versions'
+import { useConnectorsStore } from '~/stores/connectors'
 import TagBadge from './TagBadge.vue'
 
 const { applications } = storeToRefs(useApplicationsStore())
 const { environments } = storeToRefs(useEnvironmentsStore())
 const { deployments } = storeToRefs(useDeploymentsStore())
 const { versions } = storeToRefs(useVersionsStore())
-const deploymentsStore = useDeploymentsStore()
+const connectorsStore = useConnectorsStore()
+const showToast = inject('showToast') as (msg: string, type?: 'success' | 'error') => void
+const refreshingAll = ref(false)
+const refreshingAppId = ref('')
+async function refreshAll() {
+  refreshingAll.value = true
+  try {
+    const results = await connectorsStore.refreshAll({})
+    showToast && showToast('All connectors refreshed!', 'success')
+    // Optionally handle results
+  } catch (e) {
+    showToast && showToast('Refresh failed', 'error')
+  } finally {
+    refreshingAll.value = false
+  }
+}
+async function refreshApp(app: any) {
+  refreshingAppId.value = app.id
+  try {
+    const results = await connectorsStore.refreshAll({ appId: app.id })
+    showToast && showToast(`Refreshed for ${app.name}`, 'success')
+  } catch (e) {
+    showToast && showToast('Refresh failed', 'error')
+  } finally {
+    refreshingAppId.value = ''
+  }
+}
 
 const filter = ref('')
 const filterTags = computed(() => {
@@ -138,7 +180,6 @@ const filteredApps = computed(() => {
 
 const deploySelections = ref<Record<string, string>>({})
 const promoteSelections = ref<Record<string, string>>({})
-const showToast = inject('showToast') as (msg: string, type?: 'success' | 'error') => void
 
 function getDeployment(appId: string, envId: string) {
   return deployments.value.find(d => d.appId === appId && d.envId === envId)

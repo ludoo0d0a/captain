@@ -15,6 +15,18 @@
             <div>
               <div class="font-medium">{{ connector.name }}</div>
               <div class="text-xs text-gray-400">{{ connector.type }}</div>
+              <div v-if="connector.id === 'http'" class="mt-2 space-y-2">
+                <label class="block text-xs font-semibold">Base URL
+                  <input v-model="httpUrl" class="border rounded px-2 py-1 text-xs w-64 mt-1" placeholder="https://api.example.com" />
+                </label>
+                <label class="block text-xs font-semibold">Username
+                  <input v-model="httpUser" class="border rounded px-2 py-1 text-xs w-64 mt-1" placeholder="Username" />
+                </label>
+                <label class="block text-xs font-semibold">Password
+                  <input v-model="httpPass" type="password" class="border rounded px-2 py-1 text-xs w-64 mt-1" placeholder="Password" />
+                </label>
+                <button class="mt-1 px-3 py-1 rounded text-xs font-semibold bg-blue-500 text-white" @click="saveHttpConfig">Save</button>
+              </div>
             </div>
             <div class="flex items-center gap-2">
               <span v-if="connector.status === 'connected'" class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold bg-green-200 text-green-700">
@@ -38,10 +50,13 @@
 import { reactive, ref } from 'vue'
 import { useApplicationsStore } from '~/stores/applications'
 import { useEnvironmentsStore } from '~/stores/environments'
+import { useConnectorsStore } from '~/stores/connectors'
 const applicationsStore = useApplicationsStore()
 const environmentsStore = useEnvironmentsStore()
+const connectorsStore = useConnectorsStore()
 const applications = applicationsStore.applications
 const environments = environmentsStore.environments
+const connectors = connectorsStore.connectors
 
 const newAppName = ref('')
 const editingAppId = ref('')
@@ -95,11 +110,20 @@ function deleteEnv(id: string) {
   environmentsStore.removeEnvironment(id)
 }
 
-const connectors = reactive([
-  { id: 'github', name: 'GitHub Actions', type: 'CI/CD', status: 'disconnected' },
-  { id: 'jenkins', name: 'Jenkins', type: 'CI/CD', status: 'disconnected' },
-  { id: 'ssh', name: 'Custom SSH', type: 'Server', status: 'disconnected' },
-])
+// HTTP Connector config state
+const httpConnector = connectors.find(c => c.id === 'http')
+const httpUrl = ref(httpConnector && 'baseUrl' in httpConnector ? httpConnector.baseUrl : '')
+const httpUser = ref(httpConnector && 'username' in httpConnector ? httpConnector.username : '')
+const httpPass = ref(httpConnector && 'password' in httpConnector ? httpConnector.password : '')
+function saveHttpConfig() {
+  const c = connectors.find(c => c.id === 'http')
+  if (c && 'baseUrl' in c && 'username' in c && 'password' in c) {
+    c.baseUrl = httpUrl.value
+    c.username = httpUser.value
+    c.password = httpPass.value
+  }
+}
+
 function toggleConnector(connector: any) {
   connector.status = connector.status === 'connected' ? 'disconnected' : 'connected'
 }
