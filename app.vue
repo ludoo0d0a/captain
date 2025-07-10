@@ -35,7 +35,9 @@
       <header class="h-16 flex items-center px-4 md:px-6 border-b bg-white justify-between">
         <div class="flex items-center gap-2">
           <button class="md:hidden p-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400" @click="sidebarOpen = true" aria-label="Open sidebar">
-            <span class="i-heroicons-bars-3 w-6 h-6" />Menu
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
           </button>
           <div class="text-lg font-semibold">
             {{ viewMode === 'environment' ? 'Environments' : 'Applications' }} Dashboard
