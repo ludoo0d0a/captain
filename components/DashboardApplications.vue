@@ -10,13 +10,28 @@
         </button>
       </NuxtLink>
     </div>
+    <div class="flex flex-col mb-4 gap-2">
+      <div class="flex items-center">
+        <input v-model="filter" class="border rounded px-2 py-1 text-sm w-64" placeholder="Quick filter by name or tag" />
+      </div>
+      <div v-if="allTags.length" class="flex flex-wrap gap-2 mt-1">
+        <span class="text-xs text-gray-400 mr-2">Suggestions:</span>
+        <TagBadge v-for="tag in allTags" :key="tag" :tag="tag" class="cursor-pointer hover:opacity-80"
+          :class="{ 'ring-2 ring-blue-400': filterTags.includes(tag.toLowerCase()) }"
+          @click="toggleFilterTag(tag)" />
+      </div>
+    </div>
     <div class="space-y-6">
       <h2 class="text-2xl font-bold">Applications Overview</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        <div v-for="app in applications" :key="app.id" class="bg-white rounded shadow p-6 flex flex-col">
+        <div v-for="app in filteredApps" :key="app.id" class="bg-white rounded shadow p-6 flex flex-col">
           <div class="flex items-center justify-between mb-2">
             <div class="text-lg font-semibold">{{ app.name }}</div>
             <div class="text-xs text-gray-400">{{ app.description }}</div>
+          </div>
+          <div class="mb-2">
+            <TagBadge v-for="tag in app.tags || []" :key="tag" :tag="tag" class="mr-1" />
+            <span v-if="!app.tags || !app.tags.length" class="inline-block text-gray-300 text-xs">—</span>
           </div>
           <table class="w-full text-sm mt-2">
             <thead>
@@ -76,18 +91,50 @@
 </template>
 
 <script setup lang="ts">
-import { ref, inject } from 'vue'
+import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useApplicationsStore } from '~/stores/applications'
 import { useEnvironmentsStore } from '~/stores/environments'
 import { useDeploymentsStore } from '~/stores/deployments'
 import { useVersionsStore } from '~/stores/versions'
+import TagBadge from './TagBadge.vue'
 
 const { applications } = storeToRefs(useApplicationsStore())
 const { environments } = storeToRefs(useEnvironmentsStore())
 const { deployments } = storeToRefs(useDeploymentsStore())
 const { versions } = storeToRefs(useVersionsStore())
 const deploymentsStore = useDeploymentsStore()
+
+const filter = ref('')
+const filterTags = computed(() => {
+  return filter.value.split(/[,\s]+/).map(w => w.trim().toLowerCase()).filter(Boolean)
+})
+function toggleFilterTag(tag: string) {
+  const tags = filterTags.value.slice()
+  const idx = tags.indexOf(tag.toLowerCase())
+  if (idx === -1) {
+    tags.push(tag.toLowerCase())
+  } else {
+    tags.splice(idx, 1)
+  }
+  filter.value = tags.join(', ')
+}
+const allTags = computed(() => {
+  const tags = new Set<string>()
+  applications.value.forEach(a => (a.tags || []).forEach(t => tags.add(t)))
+  return Array.from(tags).sort()
+})
+const filteredApps = computed(() => {
+  if (!filter.value.trim()) return applications.value
+  // Split filter into words (by comma or space)
+  const words = filter.value.split(/[,\s]+/).map(w => w.trim().toLowerCase()).filter(Boolean)
+  return applications.value.filter(a =>
+    words.every(f =>
+      a.name.toLowerCase().includes(f) ||
+      (a.tags && a.tags.some(tag => tag.toLowerCase().includes(f)))
+    )
+  )
+})
 
 const deploySelections = ref<Record<string, string>>({})
 const promoteSelections = ref<Record<string, string>>({})

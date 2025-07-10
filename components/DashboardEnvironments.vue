@@ -10,6 +10,17 @@
         </button>
       </NuxtLink>
     </div>
+    <div class="flex flex-col mb-4 gap-2">
+      <div class="flex items-center">
+        <input v-model="filter" class="border rounded px-2 py-1 text-sm w-64" placeholder="Quick filter by name or tag" />
+      </div>
+      <div v-if="allTags.length" class="flex flex-wrap gap-2 mt-1">
+        <span class="text-xs text-gray-400 mr-2">Suggestions:</span>
+        <TagBadge v-for="tag in allTags" :key="tag" :tag="tag" class="cursor-pointer hover:opacity-80"
+          :class="{ 'ring-2 ring-blue-400': filterTags.includes(tag.toLowerCase()) }"
+          @click="toggleFilterTag(tag)" />
+      </div>
+    </div>
     <div class="space-y-6">
       <h2 class="text-2xl font-bold">Environments Overview</h2>
       <div class="overflow-x-auto">
@@ -17,15 +28,19 @@
           <thead>
             <tr>
               <th class="px-4 py-2 text-left font-semibold">Application</th>
-              <th v-for="env in environments" :key="env.id" class="px-4 py-2 text-left font-semibold">
-                {{ env.name }}
+              <th v-for="env in filteredEnvs" :key="env.id" class="px-4 py-2 text-left font-semibold">
+                <div class="flex items-center gap-2">
+                  <span>{{ env.name }}</span>
+                  <TagBadge v-for="tag in env.tags || []" :key="tag" :tag="tag" />
+                  <span v-if="!env.tags || !env.tags.length" class="inline-block text-gray-300 text-xs">—</span>
+                </div>
               </th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="app in applications" :key="app.id" class="border-t">
               <td class="px-4 py-2 font-medium">{{ app.name }}</td>
-              <td v-for="env in environments" :key="env.id" class="px-4 py-2">
+              <td v-for="env in filteredEnvs" :key="env.id" class="px-4 py-2">
                 <template v-if="getDeployment(app.id, env.id)">
                   <span class="inline-flex items-center gap-2">
                     <span :class="[isSnapshot(getDeployment(app.id, env.id)?.versionId) ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800', 'px-2 py-1 rounded text-xs font-mono']">
@@ -77,18 +92,50 @@
 </template>
 
 <script setup lang="ts">
-import { ref, inject } from 'vue'
+import { ref, inject, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useApplicationsStore } from '~/stores/applications'
 import { useEnvironmentsStore } from '~/stores/environments'
 import { useDeploymentsStore } from '~/stores/deployments'
 import { useVersionsStore } from '~/stores/versions'
+import TagBadge from './TagBadge.vue'
 
 const { applications } = storeToRefs(useApplicationsStore())
 const { environments } = storeToRefs(useEnvironmentsStore())
 const { deployments } = storeToRefs(useDeploymentsStore())
 const { versions } = storeToRefs(useVersionsStore())
 const deploymentsStore = useDeploymentsStore()
+
+const filter = ref('')
+const filterTags = computed(() => {
+  return filter.value.split(/[,\s]+/).map(w => w.trim().toLowerCase()).filter(Boolean)
+})
+function toggleFilterTag(tag: string) {
+  const tags = filterTags.value.slice()
+  const idx = tags.indexOf(tag.toLowerCase())
+  if (idx === -1) {
+    tags.push(tag.toLowerCase())
+  } else {
+    tags.splice(idx, 1)
+  }
+  filter.value = tags.join(', ')
+}
+const allTags = computed(() => {
+  const tags = new Set<string>()
+  environments.value.forEach(e => (e.tags || []).forEach(t => tags.add(t)))
+  return Array.from(tags).sort()
+})
+const filteredEnvs = computed(() => {
+  if (!filter.value.trim()) return environments.value
+  // Split filter into words (by comma or space)
+  const words = filter.value.split(/[,\s]+/).map(w => w.trim().toLowerCase()).filter(Boolean)
+  return environments.value.filter(e =>
+    words.every(f =>
+      e.name.toLowerCase().includes(f) ||
+      (e.tags && e.tags.some(tag => tag.toLowerCase().includes(f)))
+    )
+  )
+})
 
 const deploySelections = ref<Record<string, string>>({})
 const promoteSelections = ref<Record<string, string>>({})

@@ -4,12 +4,13 @@ export type Environment = {
   id: string
   name: string
   servers?: string[]
+  tags?: string[]
 }
 
 const MOCK_ENVS: Environment[] = [
-  { id: 'env1', name: 'Staging', servers: ['staging-1', 'staging-2'] },
-  { id: 'env2', name: 'Production', servers: ['prod-1'] },
-  { id: 'env3', name: 'QA', servers: ['qa-1'] },
+  { id: 'env1', name: 'Staging', servers: ['staging-1', 'staging-2'], tags: ['test', 'preprod'] },
+  { id: 'env2', name: 'Production', servers: ['prod-1'], tags: ['prod', 'live'] },
+  { id: 'env3', name: 'QA', servers: ['qa-1'], tags: ['qa', 'test'] },
 ]
 
 function getInitialEnvironments() {

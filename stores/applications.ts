@@ -5,12 +5,13 @@ export type Application = {
   name: string
   description?: string
   versions: string[] // array of Version IDs
+  tags?: string[]
 }
 
 const MOCK_APPS: Application[] = [
-  { id: 'app1', name: 'Frontend', description: 'User-facing web app', versions: ['ver1', 'ver2', 'ver3'] },
-  { id: 'app2', name: 'Backend', description: 'API server', versions: ['ver4', 'ver5'] },
-  { id: 'app3', name: 'Worker', description: 'Background jobs', versions: ['ver6'] },
+  { id: 'app1', name: 'Frontend', description: 'User-facing web app', versions: ['ver1', 'ver2', 'ver3'], tags: ['web', 'ui'] },
+  { id: 'app2', name: 'Backend', description: 'API server', versions: ['ver4', 'ver5'], tags: ['api', 'core'] },
+  { id: 'app3', name: 'Worker', description: 'Background jobs', versions: ['ver6'], tags: ['jobs', 'async'] },
 ]
 
 function getInitialApplications() {
