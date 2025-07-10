@@ -10,7 +10,7 @@
       </NuxtLink>
       <h1 class="text-3xl font-bold">Manage Environments</h1>
     </div>
-    <div v-if="environmentsStore.loading" class="flex justify-center items-center min-h-[200px]">
+    <div v-if="loading" class="flex justify-center items-center min-h-[200px]">
       <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
@@ -20,6 +20,20 @@
       <div class="flex items-center mb-4">
         <h3 class="text-xl font-semibold flex-1">Environments</h3>
         <input v-model="filter" class="border rounded px-2 py-1 text-sm ml-4 w-64" placeholder="Quick filter by name or tag" />
+        <button 
+          @click="refreshEnvironments" 
+          :disabled="loading"
+          class="ml-2 p-2 rounded hover:bg-gray-100 disabled:opacity-50" 
+          title="Refresh environments"
+        >
+          <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <svg v-else class="animate-spin h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+          </svg>
+        </button>
       </div>
       <ul class="divide-y mb-4">
         <li v-for="env in filteredEnvs" :key="env.id" class="py-3 flex items-center gap-2">
@@ -58,11 +72,12 @@
 </template>
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useEnvironmentsStore } from '~/stores/environments'
 import type { Environment } from '~/stores/environments'
+
 const environmentsStore = useEnvironmentsStore()
-const environments = ref<Environment[]>([])
-// Removed: const loading = ref(false)
+const { environments, loading } = storeToRefs(environmentsStore)
 
 const newEnvName = ref('')
 const newEnvTagsInput = ref('')
@@ -72,9 +87,16 @@ const editEnvTagsInput = ref('')
 const filter = ref('')
 
 onMounted(async () => {
+  console.log('Environments page onMounted called')
   await environmentsStore.fetchEnvironments()
-  environments.value = environmentsStore.environments
+  console.log('Environments loaded:', environments.value.length)
 })
+
+// Also ensure data is loaded if onMounted doesn't work
+if (environments.value.length === 0) {
+  console.log('No environments found, fetching...')
+  environmentsStore.fetchEnvironments()
+}
 
 const allTags = computed(() => {
   const tags = new Set<string>()
@@ -122,7 +144,7 @@ async function addEnv() {
   const tags = newEnvTagsInput.value.split(',').map(t => t.trim()).filter(Boolean)
   await environmentsStore.addEnvironment({ id: 'env-' + Math.random().toString(36).slice(2), name: newEnvName.value.trim(), tags })
   await environmentsStore.fetchEnvironments()
-  environments.value = environmentsStore.environments
+  // environments.value = environmentsStore.environments // This line is no longer needed as environments is reactive
   newEnvName.value = ''
   newEnvTagsInput.value = ''
 }
@@ -136,7 +158,7 @@ async function saveEnvEdit(env: Environment) {
   const tags = editEnvTagsInput.value.split(',').map(t => t.trim()).filter(Boolean)
   await environmentsStore.updateEnvironment(env.id, { name: editEnvName.value.trim(), tags })
   await environmentsStore.fetchEnvironments()
-  environments.value = environmentsStore.environments
+  // environments.value = environmentsStore.environments // This line is no longer needed as environments is reactive
   editingEnvId.value = ''
   editEnvName.value = ''
   editEnvTagsInput.value = ''
@@ -149,6 +171,9 @@ function cancelEnvEdit() {
 async function deleteEnv(id: string) {
   await environmentsStore.removeEnvironment(id)
   await environmentsStore.fetchEnvironments()
-  environments.value = environmentsStore.environments
+  // environments.value = environmentsStore.environments // This line is no longer needed as environments is reactive
+}
+async function refreshEnvironments() {
+  await environmentsStore.fetchEnvironments()
 }
 </script> 

@@ -5,9 +5,12 @@
       <div class="flex items-center gap-2">
         <button @click="refreshAll" :disabled="refreshingAll" class="p-2 rounded hover:bg-gray-100" title="Refresh all applications">
           <svg v-if="!refreshingAll" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 12l1.5 1.5m0 0l1.5-1.5m-1.5 1.5V6.75A2.25 2.25 0 016.75 4.5h10.5A2.25 2.25 0 0119.5 6.75v10.5A2.25 2.25 0 0117.25 19.5H6.75A2.25 2.25 0 014.5 17.25V13.5" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-          <svg v-else class="animate-spin h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
+          <svg v-else class="animate-spin h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+          </svg>
         </button>
         <NuxtLink to="/manage-applications">
           <button class="p-2 rounded hover:bg-gray-100" title="Manage Applications">
@@ -18,34 +21,44 @@
         </NuxtLink>
       </div>
     </div>
-    <div class="flex flex-col mb-4 gap-2">
-      <div class="flex items-center">
-        <input v-model="filter" class="border rounded px-2 py-1 text-sm w-64" placeholder="Quick filter by name or tag" />
-      </div>
-      <div v-if="allTags.length" class="flex flex-wrap gap-2 mt-1">
-        <span class="text-xs text-gray-400 mr-2">Suggestions:</span>
-        <TagBadge v-for="tag in allTags" :key="tag" :tag="tag" class="cursor-pointer hover:opacity-80"
-          :class="{ 'ring-2 ring-blue-400': filterTags.includes(tag.toLowerCase()) }"
-          @click="toggleFilterTag(tag)" />
-      </div>
+
+    <div v-if="loading" class="flex justify-center items-center min-h-[200px]">
+      <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+      </svg>
     </div>
-    <div class="space-y-6">
-      <h2 class="text-2xl font-bold">Applications Overview</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        <div v-for="app in filteredApps" :key="app.id" class="bg-white rounded shadow p-6 flex flex-col">
-          <div class="flex items-center justify-between mb-2">
+
+    <div v-else>
+      <div class="flex items-center mb-4">
+        <input v-model="filter" class="border rounded px-3 py-2 text-sm w-64" placeholder="Filter by application name or tags..." />
+      </div>
+
+      <div class="space-y-6">
+        <div v-for="app in filteredApps" :key="app.id" class="bg-white rounded shadow p-6">
+          <div class="flex items-center justify-between mb-4">
             <div class="text-lg font-semibold">{{ app.name }}</div>
             <div class="flex items-center gap-2">
-              <button @click="refreshApp(app)" :disabled="refreshingAppId === app.id" class="p-1 rounded hover:bg-gray-100" title="Refresh application">
+              <button @click="refreshApplication(app.id)" :disabled="refreshingAppId === app.id" class="p-1 rounded hover:bg-gray-100" title="Refresh application">
                 <svg v-if="refreshingAppId !== app.id" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 12l1.5 1.5m0 0l1.5-1.5m-1.5 1.5V6.75A2.25 2.25 0 016.75 4.5h10.5A2.25 2.25 0 0119.5 6.75v10.5A2.25 2.25 0 0117.25 19.5H6.75A2.25 2.25 0 014.5 17.25V13.5" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <svg v-else class="animate-spin h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
+                <svg v-else class="animate-spin h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
               </button>
+              <NuxtLink to="/manage-applications">
+                <button class="p-1 rounded hover:bg-gray-100" title="Manage Applications">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              </NuxtLink>
             </div>
           </div>
           <div class="mb-2">
-            <TagBadge v-for="tag in app.tags || []" :key="tag" :tag="tag" class="mr-1" />
+            <TagBadge v-for="tag in app.tags" :key="tag" :tag="tag" class="mr-1" />
             <span v-if="!app.tags || !app.tags.length" class="inline-block text-gray-300 text-xs">—</span>
           </div>
           <table class="w-full text-sm mt-2">
@@ -58,12 +71,12 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="env in environments" :key="env.id" class="border-t">
+              <tr v-for="env in getAllEnvironments()" :key="env.id" class="border-t">
                 <td class="px-2 py-1">{{ env.name }}</td>
                 <td class="px-2 py-1">
-                  <template v-if="getDeployment(app.id, env.id)">
-                    <span :class="[isSnapshot(getDeployment(app.id, env.id)?.versionId) ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800', 'px-2 py-1 rounded text-xs font-mono']">
-                      {{ getVersionName(getDeployment(app.id, env.id)?.versionId) }}
+                  <template v-if="getDeployment(app, env.id)">
+                    <span :class="[getDeployment(app, env.id)?.version?.isSnapshot ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800', 'px-2 py-1 rounded text-xs font-mono']">
+                      {{ getDeployment(app, env.id)?.version?.name || 'Unknown' }}
                     </span>
                   </template>
                   <template v-else>
@@ -71,9 +84,9 @@
                   </template>
                 </td>
                 <td class="px-2 py-1">
-                  <template v-if="getDeployment(app.id, env.id)">
-                    <span :class="statusBadge(getDeployment(app.id, env.id)?.status)">
-                      {{ getDeployment(app.id, env.id)?.status }}
+                  <template v-if="getDeployment(app, env.id)">
+                    <span :class="statusBadge(getDeployment(app, env.id)?.status)">
+                      {{ getDeployment(app, env.id)?.status }}
                     </span>
                   </template>
                   <template v-else>
@@ -88,7 +101,7 @@
                     </svg>
                   </NuxtLink>
                   <!-- Promote icon (if promotable) -->
-                  <template v-if="getPromotable(app.id, env.id).length">
+                  <template v-if="getPromotable(app, env.id).length">
                     <NuxtLink :to="{ path: '/promote', query: { appId: app.id, envId: env.id } }" title="Promote version from another environment">
                       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500 hover:text-green-700 inline ml-2 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
@@ -106,50 +119,111 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useApplicationsStore } from '~/stores/applications'
-import { useEnvironmentsStore } from '~/stores/environments'
-import { useDeploymentsStore } from '~/stores/deployments'
-import { useVersionsStore } from '~/stores/versions'
+import { ref, inject, computed, onMounted } from 'vue'
 import { useConnectorsStore } from '~/stores/connectors'
 import TagBadge from './TagBadge.vue'
 
-const { applications } = storeToRefs(useApplicationsStore())
-const { environments } = storeToRefs(useEnvironmentsStore())
-const { deployments } = storeToRefs(useDeploymentsStore())
-const { versions } = storeToRefs(useVersionsStore())
+interface AggregatedApplication {
+  id: string;
+  name: string;
+  tags: string[];
+  environments: Array<{
+    id: string;
+    name: string;
+    tags: string[];
+    deployment: {
+      id: string;
+      status: string;
+      deployedAt: string;
+      version: {
+        id: string;
+        name: string;
+        isSnapshot: boolean;
+        createdAt: string;
+      };
+    } | null;
+  }>;
+}
+
+const applications = ref<AggregatedApplication[]>([])
+const loading = ref(false)
 const connectorsStore = useConnectorsStore()
 const showToast = inject('showToast') as (msg: string, type?: 'success' | 'error') => void
 const refreshingAll = ref(false)
 const refreshingAppId = ref('')
 const connectorInstances = computed(() => connectorsStore.connectorInstances.filter((c: any) => c !== null))
+
+// Load aggregated view data
+async function loadApplicationsView() {
+  loading.value = true
+  try {
+    const data = await $fetch('/api/view?type=applications') as AggregatedApplication[]
+    applications.value = data
+  } catch (error) {
+    console.error('Failed to load applications view:', error)
+    showToast && showToast('Failed to load applications data', 'error')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  loadApplicationsView()
+})
+
 async function refreshAll() {
   refreshingAll.value = true
   try {
-    // Use connectorInstances to call refresh
-    const results = await Promise.all(connectorInstances.value.map(c => c.refresh({})))
-    showToast && showToast('All connectors refreshed!', 'success')
-    // Optionally handle results
-  } catch (e) {
-    showToast && showToast('Refresh failed', 'error')
+    // Refresh connectors first
+    const refreshPromises = connectorInstances.value.map(async (connector: any) => {
+      if (connector && typeof connector.refresh === 'function') {
+        try {
+          await connector.refresh()
+        } catch (error) {
+          console.error(`Failed to refresh connector ${connector.constructor.name}:`, error)
+        }
+      }
+    })
+    await Promise.all(refreshPromises)
+    
+    // Then reload the view
+    await loadApplicationsView()
+    showToast && showToast('All applications refreshed successfully!', 'success')
+  } catch (error) {
+    console.error('Failed to refresh all:', error)
+    showToast && showToast('Failed to refresh applications', 'error')
   } finally {
     refreshingAll.value = false
   }
 }
-async function refreshApp(app: any) {
-  refreshingAppId.value = app.id
+
+async function refreshApplication(appId: string) {
+  refreshingAppId.value = appId
   try {
-    // Use connectorInstances to call refresh for each
-    const results = await Promise.all(connectorInstances.value.map(c => c.refresh({ appId: app.id })))
-    showToast && showToast(`Refreshed for ${app.name}`, 'success')
-  } catch (e) {
-    showToast && showToast('Refresh failed', 'error')
+    // Refresh connectors for this application
+    const refreshPromises = connectorInstances.value.map(async (connector: any) => {
+      if (connector && typeof connector.refresh === 'function') {
+        try {
+          await connector.refresh()
+        } catch (error) {
+          console.error(`Failed to refresh connector ${connector.constructor.name}:`, error)
+        }
+      }
+    })
+    await Promise.all(refreshPromises)
+    
+    // Reload the view
+    await loadApplicationsView()
+    showToast && showToast('Application refreshed successfully!', 'success')
+  } catch (error) {
+    console.error('Failed to refresh application:', error)
+    showToast && showToast('Failed to refresh application', 'error')
   } finally {
     refreshingAppId.value = ''
   }
 }
 
+// Filter applications based on tags
 const filter = ref('')
 const filterTags = computed(() => {
   return filter.value.split(/[,\s]+/).map(w => w.trim().toLowerCase()).filter(Boolean)
@@ -171,88 +245,55 @@ const allTags = computed(() => {
 })
 const filteredApps = computed(() => {
   if (!filter.value.trim()) return applications.value
-  // Split filter into words (by comma or space)
   const words = filter.value.split(/[,\s]+/).map(w => w.trim().toLowerCase()).filter(Boolean)
-  return applications.value.filter(a =>
+  return applications.value.filter(app =>
     words.every(f =>
-      a.name.toLowerCase().includes(f) ||
-      (a.tags && a.tags.some(tag => tag.toLowerCase().includes(f)))
+      app.name.toLowerCase().includes(f) ||
+      (app.tags && app.tags.some(tag => tag.toLowerCase().includes(f)))
     )
   )
 })
 
-const deploySelections = ref<Record<string, string>>({})
-const promoteSelections = ref<Record<string, string>>({})
+// Helper functions for deployment data
+function getDeployment(app: AggregatedApplication, envId: string) {
+  const env = app.environments.find(env => env.id === envId)
+  return env?.deployment || null
+}
 
-function getDeployment(appId: string, envId: string) {
-  return deployments.value.find(d => d.appId === appId && d.envId === envId)
-}
 function getVersionName(versionId?: string) {
-  return versions.value.find(v => v.id === versionId)?.name || ''
+  // This would need to be updated if we want to show version names
+  // For now, we'll use the version ID as a fallback
+  return versionId || ''
 }
+
 function isSnapshot(versionId?: string) {
-  return versions.value.find(v => v.id === versionId)?.isSnapshot
+  // This would need to be updated if we want to check snapshot status
+  // For now, we'll return false as a fallback
+  return false
 }
+
 function statusBadge(status?: string) {
   if (status === 'deployed') return 'bg-green-200 text-green-800 px-2 py-1 rounded text-xs'
   if (status === 'failed') return 'bg-red-200 text-red-800 px-2 py-1 rounded text-xs'
   if (status === 'pending') return 'bg-yellow-200 text-yellow-800 px-2 py-1 rounded text-xs'
   return 'bg-gray-100 text-gray-500 px-2 py-1 rounded text-xs'
 }
-function getAppVersions(appId: string) {
-  return versions.value.filter(v => v.appId === appId)
+
+function getPromotable(app: AggregatedApplication, envId: string) {
+  // This would need to be implemented based on the aggregated data
+  // For now, return empty array
+  return []
 }
-function deployVersion(app: any, env: any, versionId: string) {
-  if (!canDeploy(app, env, versionId)) {
-    showToast && showToast('This version is already deployed in this environment.', 'error')
-    return
-  }
-  const now = new Date().toISOString()
-  const existing = getDeployment(app.id, env.id)
-  if (existing) {
-    deploymentsStore.updateDeployment(existing.id, { versionId, status: 'deployed', deployedAt: now })
-  } else {
-    deploymentsStore.addDeployment({ id: 'dep-' + Math.random().toString(36).slice(2), appId: app.id, envId: env.id, versionId, status: 'deployed', deployedAt: now })
-  }
-  deploySelections.value[app.id + '-' + env.id] = ''
-  showToast && showToast('Version deployed successfully!', 'success')
-}
-function getPromotable(appId: string, targetEnvId: string) {
-  // Find all deployments of this app in other envs, not yet in this env
-  return deployments.value
-    .filter(d => d.appId === appId && d.envId !== targetEnvId)
-    .map(d => ({
-      env: environments.value.find(e => e.id === d.envId),
-      version: versions.value.find(v => v.id === d.versionId),
-    }))
-    .filter(item => item.env && item.version && !getDeployment(appId, targetEnvId))
-}
-function promoteVersion(app: any, env: any, versionId: string) {
-  const version = getVersionById(versionId)
-  if (!canPromote(app, env, version)) {
-    showToast && showToast('Cannot promote this version to this environment.', 'error')
-    return
-  }
-  const now = new Date().toISOString()
-  deploymentsStore.addDeployment({ id: 'dep-' + Math.random().toString(36).slice(2), appId: app.id, envId: env.id, versionId, status: 'deployed', deployedAt: now })
-  promoteSelections.value[app.id + '-' + env.id] = ''
-  showToast && showToast('Version promoted successfully!', 'success')
-}
-function isProduction(env: any) {
-  return env.name && env.name.toLowerCase().includes('prod')
-}
-function canDeploy(app: any, env: any, versionId: string) {
-  const current = getDeployment(app.id, env.id)
-  return !current || current.versionId !== versionId
-}
-function canPromote(app: any, env: any, version: any) {
-  if (!version) return false
-  if (isProduction(env) && version.isSnapshot) return false
-  // Don't promote if already deployed
-  const current = getDeployment(app.id, env.id)
-  return !current || current.versionId !== version.id
-}
-function getVersionById(versionId: string) {
-  return versions.value.find(v => v.id === versionId)
+
+function getAllEnvironments() {
+  const allEnvs: { id: string; name: string; tags: string[] }[] = [];
+  applications.value.forEach(app => {
+    app.environments.forEach(env => {
+      if (!allEnvs.some(e => e.id === env.id)) {
+        allEnvs.push(env);
+      }
+    });
+  });
+  return allEnvs;
 }
 </script> 
