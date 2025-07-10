@@ -51,10 +51,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, provide } from 'vue'
+import { ref, provide, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useHead } from '@unhead/vue'
 const viewMode = ref<'environment' | 'app'>('environment')
 const router = useRouter()
+const route = useRoute()
+
+const pageTitle = computed(() => {
+  if (route.path === '/') {
+    return viewMode.value === 'environment' ? 'Environments Dashboard - Captain' : 'Applications Dashboard - Captain'
+  }
+  if (route.path.startsWith('/settings')) return 'Settings - Captain'
+  if (route.path.startsWith('/manage-applications')) return 'Manage Applications - Captain'
+  if (route.path.startsWith('/manage-environments')) return 'Manage Environments - Captain'
+  if (route.path.startsWith('/deploy')) return 'Deploy - Captain'
+  if (route.path.startsWith('/promote')) return 'Promote - Captain'
+  return 'Captain'
+})
+
+useHead({ title: pageTitle })
+
 // Toast system
 const toasts = ref<{ id: number, message: string, type: 'success' | 'error' }[]>([])
 function showToast(message: string, type: 'success' | 'error' = 'success') {
