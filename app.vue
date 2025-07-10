@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { ref, provide, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useHead } from '@unhead/vue'
+import { useHead } from '#imports'
 const viewMode = ref<'environment' | 'app'>('environment')
 const router = useRouter()
 const route = useRoute()
