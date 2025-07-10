@@ -1,0 +1,47 @@
+name: Generate Screenshots and GIFs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Playwright
+        run: |
+          npm install -D playwright
+          npx playwright install --with-deps
+
+      - name: Take screenshots and record video
+        run: node .github/scripts/screenshot.js
+
+      - name: Convert video to GIF
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg gifsicle
+          ffmpeg -i screenshots/demo.webm -vf "fps=10,scale=800:-1:flags=lanczos" screenshots/demo.gif
+          gifsicle -O3 --colors 64 screenshots/demo.gif -o screenshots/demo.gif
+
+      - name: Upload screenshots and GIFs
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots/
+
+      - name: Commit and push screenshots
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout ${{ github.ref_name }}
+          git add screenshots/
+          git commit -m "chore: update screenshots and GIFs [skip ci]" || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }} 
