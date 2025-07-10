@@ -6,6 +6,7 @@ export interface Connector {
   type: string
   status: 'connected' | 'disconnected'
   refresh(scope: { appId?: string; envId?: string }): Promise<ConnectorRefreshResult>
+  deploy(params: { appId: string; envId: string; versionId: string }): Promise<ConnectorDeployResult>
 }
 
 export type ConnectorRefreshResult = {
@@ -14,6 +15,16 @@ export type ConnectorRefreshResult = {
   data: any
   success: boolean
   message?: string
+}
+
+export type ConnectorDeployResult = {
+  connectorId: string
+  appId: string
+  envId: string
+  versionId: string
+  success: boolean
+  message?: string
+  data?: any
 }
 
 // Example mock connector implementations
@@ -33,6 +44,15 @@ class GitHubConnector implements Connector {
       message: 'GitHub refreshed',
     }
   }
+  async deploy(params: { appId: string; envId: string; versionId: string }): Promise<ConnectorDeployResult> {
+    await new Promise(r => setTimeout(r, 500))
+    return {
+      connectorId: this.id,
+      ...params,
+      success: true,
+      message: `GitHub deployed version ${params.versionId} to ${params.envId}`,
+    }
+  }
 }
 class JenkinsConnector implements Connector {
   id = 'jenkins'
@@ -49,6 +69,15 @@ class JenkinsConnector implements Connector {
       message: 'Jenkins refreshed',
     }
   }
+  async deploy(params: { appId: string; envId: string; versionId: string }): Promise<ConnectorDeployResult> {
+    await new Promise(r => setTimeout(r, 500))
+    return {
+      connectorId: this.id,
+      ...params,
+      success: true,
+      message: `Jenkins deployed version ${params.versionId} to ${params.envId}`,
+    }
+  }
 }
 class SSHConnector implements Connector {
   id = 'ssh'
@@ -63,6 +92,15 @@ class SSHConnector implements Connector {
       data: { servers: ['srv1', 'srv2'] },
       success: true,
       message: 'SSH refreshed',
+    }
+  }
+  async deploy(params: { appId: string; envId: string; versionId: string }): Promise<ConnectorDeployResult> {
+    await new Promise(r => setTimeout(r, 500))
+    return {
+      connectorId: this.id,
+      ...params,
+      success: true,
+      message: `SSH deployed version ${params.versionId} to ${params.envId}`,
     }
   }
 }
@@ -96,6 +134,16 @@ class HttpConnector implements Connector {
       },
       success: true,
       message: `Fetched applications for env ${scope.envId} from HTTP`,
+    }
+  }
+  async deploy(params: { appId: string; envId: string; versionId: string }): Promise<ConnectorDeployResult> {
+    await new Promise(r => setTimeout(r, 500))
+    // Example: fetch(`${this.baseUrl}/deploy`, { method: 'POST', body: JSON.stringify(params), ... })
+    return {
+      connectorId: this.id,
+      ...params,
+      success: true,
+      message: `HTTP deployed version ${params.versionId} to ${params.envId}`,
     }
   }
 }
