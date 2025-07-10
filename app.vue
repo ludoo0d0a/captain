@@ -14,7 +14,7 @@
           </button>
         </nav>
         <div class="p-4 border-t">
-          <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-100" @click="showSettings = true">
+          <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 block" @click="goToSettings">
             <span class="i-heroicons-cog-6-tooth mr-2" /> Settings
           </button>
         </div>
@@ -41,8 +41,6 @@
     <template v-else>
       <NuxtPage />
     </template>
-    <!-- Settings Modal -->
-    <SettingsModal v-if="showSettings" @close="showSettings = false" />
     <!-- Toast Notifications -->
     <div class="fixed top-4 right-4 z-50 space-y-2">
       <div v-for="toast in toasts" :key="toast.id" :class="['px-4 py-2 rounded shadow text-white', toast.type === 'success' ? 'bg-green-600' : 'bg-red-600']">
@@ -54,10 +52,9 @@
 
 <script setup lang="ts">
 import { ref, provide } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 const viewMode = ref<'environment' | 'app'>('environment')
-const showSettings = ref(false)
-const $route = useRoute()
+const router = useRouter()
 // Toast system
 const toasts = ref<{ id: number, message: string, type: 'success' | 'error' }[]>([])
 function showToast(message: string, type: 'success' | 'error' = 'success') {
@@ -68,4 +65,8 @@ function showToast(message: string, type: 'success' | 'error' = 'success') {
   }, 3000)
 }
 provide('showToast', showToast)
+
+function goToSettings() {
+  router.push('/settings')
+}
 </script>

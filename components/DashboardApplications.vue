@@ -123,10 +123,12 @@ const connectorsStore = useConnectorsStore()
 const showToast = inject('showToast') as (msg: string, type?: 'success' | 'error') => void
 const refreshingAll = ref(false)
 const refreshingAppId = ref('')
+const connectorInstances = computed(() => connectorsStore.connectorInstances.filter((c: any) => c !== null))
 async function refreshAll() {
   refreshingAll.value = true
   try {
-    const results = await connectorsStore.refreshAll({})
+    // Use connectorInstances to call refresh
+    const results = await Promise.all(connectorInstances.value.map(c => c.refresh({})))
     showToast && showToast('All connectors refreshed!', 'success')
     // Optionally handle results
   } catch (e) {
@@ -138,7 +140,8 @@ async function refreshAll() {
 async function refreshApp(app: any) {
   refreshingAppId.value = app.id
   try {
-    const results = await connectorsStore.refreshAll({ appId: app.id })
+    // Use connectorInstances to call refresh for each
+    const results = await Promise.all(connectorInstances.value.map(c => c.refresh({ appId: app.id })))
     showToast && showToast(`Refreshed for ${app.name}`, 'success')
   } catch (e) {
     showToast && showToast('Refresh failed', 'error')
