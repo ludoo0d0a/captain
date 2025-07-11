@@ -9,7 +9,19 @@ export function getDatabase(): DatabaseAdapter {
     if (process.env.NODE_ENV === 'production') {
       // Use Cloudflare D1 in production
       try {
-        const d1Db = hubDatabase();
+        // Get D1 database from environment binding
+        let d1Db: any;
+        
+        if (typeof process !== 'undefined' && process.env.DB) {
+          d1Db = process.env.DB;
+        } else if (typeof globalThis !== 'undefined' && (globalThis as any).DB) {
+          d1Db = (globalThis as any).DB;
+        } else if (typeof hubDatabase === 'function') {
+          // Fallback to hubDatabase if available
+          d1Db = hubDatabase();
+        } else {
+          throw new Error('No D1 database binding found - check your wrangler.toml configuration');
+        }
         db = new D1Adapter(d1Db);
       } catch (error) {
         console.error('Failed to initialize D1 database:', error);
