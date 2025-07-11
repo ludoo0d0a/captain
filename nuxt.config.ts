@@ -6,7 +6,6 @@ export default defineNuxtConfig({
     compatibilityDate: '2025-07-10',
     css: ['~/assets/css/main.css'],
     devtools: { enabled: true },
-    //spages: false,
     vite: {
       plugins: [
         tailwindcss(),
@@ -14,9 +13,6 @@ export default defineNuxtConfig({
     },
     hub: {
       database: true,
-      //kv: true,
-      //blob: true,
-      //cache: true,
     },
     nitro: {
       experimental: {
@@ -24,6 +20,8 @@ export default defineNuxtConfig({
         openAPI: true
       }
     },
-    modules: [// ...other modules
-    '@pinia/nuxt', '@nuxthub/core'],
+    modules: [
+      '@pinia/nuxt', 
+      '@nuxthub/core'
+    ],
   })
