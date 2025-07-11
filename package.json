@@ -9,7 +9,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "deploy": "npx nuxthub deploy"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.4.1",

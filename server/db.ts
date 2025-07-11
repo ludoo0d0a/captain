@@ -1,53 +1,55 @@
-import Database from 'better-sqlite3';
+// import Database from 'better-sqlite3';
+//const db = new Database('data.db'); 
 
-//const db = new Database('data.db'); // Creates data.db in project root
 const db = hubDatabase()
 
-// Applications table
-// id: string, name: string, tags: string (JSON)
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS applications (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    tags TEXT
-  )
-`).run();
+export function createTables() {
+  // Applications table
+  // id: string, name: string, tags: string (JSON)
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS applications (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      tags TEXT
+    )
+  `).run();
 
-// Environments table
-// id: string, name: string, tags: string (JSON)
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS environments (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    tags TEXT
-  )
-`).run();
+  // Environments table
+  // id: string, name: string, tags: string (JSON)
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS environments (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      tags TEXT
+    )
+  `).run();
 
-// Versions table
-// id: string, appId: string, name: string, createdAt: string, isSnapshot: int, metadata: string (JSON)
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS versions (
-    id TEXT PRIMARY KEY,
-    appId TEXT NOT NULL,
-    name TEXT NOT NULL,
-    createdAt TEXT NOT NULL,
-    isSnapshot INTEGER,
-    metadata TEXT
-  )
-`).run();
+  // Versions table
+  // id: string, appId: string, name: string, createdAt: string, isSnapshot: int, metadata: string (JSON)
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS versions (
+      id TEXT PRIMARY KEY,
+      appId TEXT NOT NULL,
+      name TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      isSnapshot INTEGER,
+      metadata TEXT
+    )
+  `).run();
 
-// Deployments table
-// id: string, appId: string, envId: string, versionId: string, status: string, deployedAt: string
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS deployments (
-    id TEXT PRIMARY KEY,
-    appId TEXT NOT NULL,
-    envId TEXT NOT NULL,
-    versionId TEXT NOT NULL,
-    status TEXT,
-    deployedAt TEXT
-  )
-`).run();
+  // Deployments table
+  // id: string, appId: string, envId: string, versionId: string, status: string, deployedAt: string
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS deployments (
+      id TEXT PRIMARY KEY,
+      appId TEXT NOT NULL,
+      envId TEXT NOT NULL,
+      versionId TEXT NOT NULL,
+      status TEXT,
+      deployedAt TEXT
+    )
+  `).run();
+}
 
 // Function to clear all data
 export function clearDatabase() {
@@ -110,10 +112,15 @@ export function prefillWithMockData() {
   const insertVersion = db.prepare('INSERT INTO versions (id, appId, name, createdAt, isSnapshot, metadata) VALUES (?, ?, ?, ?, ?, ?)');
   const insertDeployment = db.prepare('INSERT INTO deployments (id, appId, envId, versionId, status, deployedAt) VALUES (?, ?, ?, ?, ?, ?)');
   
-  mockApps.forEach(app => insertApp.run(app.id, app.name, app.tags));
-  mockEnvs.forEach(env => insertEnv.run(env.id, env.name, env.tags));
-  mockVersions.forEach(version => insertVersion.run(version.id, version.appId, version.name, version.createdAt, version.isSnapshot, version.metadata));
-  mockDeployments.forEach(deployment => insertDeployment.run(deployment.id, deployment.appId, deployment.envId, deployment.versionId, deployment.status, deployment.deployedAt));
+  mockApps.forEach(app => insertApp.bind(app.id, app.name, app.tags).run());
+  mockEnvs.forEach(env => insertEnv.bind(env.id, env.name, env.tags).run());
+  mockVersions.forEach(version => insertVersion.bind(version.id, version.appId, version.name, version.createdAt, version.isSnapshot, version.metadata).run());
+  mockDeployments.forEach(deployment => insertDeployment.bind(deployment.id, deployment.appId, deployment.envId, deployment.versionId, deployment.status, deployment.deployedAt).run());
+
+  // mockApps.forEach(app => insertApp.run(app.id, app.name, app.tags));
+  // mockEnvs.forEach(env => insertEnv.run(env.id, env.name, env.tags));
+  // mockVersions.forEach(version => insertVersion.run(version.id, version.appId, version.name, version.createdAt, version.isSnapshot, version.metadata));
+  // mockDeployments.forEach(deployment => insertDeployment.run(deployment.id, deployment.appId, deployment.envId, deployment.versionId, deployment.status, deployment.deployedAt));
 }
 
 export default db; 
