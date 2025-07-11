@@ -80,6 +80,19 @@ export async function createTables() {
       deployedAt TEXT
     )
   `);
+
+  await database.execute(`
+    CREATE TABLE IF NOT EXISTS connectors (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      settings TEXT,
+      credentials TEXT,
+      status TEXT DEFAULT 'disconnected',
+      createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+      updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 }
 
 export async function clearDatabase() {
@@ -89,6 +102,7 @@ export async function clearDatabase() {
   await database.execute('DELETE FROM versions');
   await database.execute('DELETE FROM environments');
   await database.execute('DELETE FROM applications');
+  await database.execute('DELETE FROM connectors');
 }
 
 export async function prefillWithMockData() {

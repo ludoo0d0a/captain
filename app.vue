@@ -18,6 +18,9 @@
         <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400" :class="{ 'bg-gray-200': viewMode === 'app' }" @click="onNav('app')">
           <span class="i-heroicons-cube mr-2" /> Applications
         </button>
+        <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400" @click="onNav('connectors')">
+          <span class="i-heroicons-link mr-2" /> Connectors
+        </button>
       </nav>
       <div class="p-4 border-t">
         <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 block focus:outline-none focus:ring-2 focus:ring-blue-400" @click="onNav('settings')">
@@ -40,7 +43,7 @@
             </svg>
           </button>
           <div class="text-lg font-semibold">
-            {{ viewMode === 'environment' ? 'Environments' : 'Applications' }} Dashboard
+          {{ viewMode === 'environment' ? 'Environments' : 'Applications' }} Dashboard
           </div>
         </div>
         <div>
@@ -53,10 +56,10 @@
         <DashboardApplications v-else-if="$route.path === '/' && viewMode === 'app'" />
         <NuxtPage v-else />
       </main>
-      <!-- Toast Notifications -->
-      <div class="fixed top-4 right-4 z-50 space-y-2">
-        <div v-for="toast in toasts" :key="toast.id" :class="['px-4 py-2 rounded shadow text-white', toast.type === 'success' ? 'bg-green-600' : 'bg-red-600']">
-          {{ toast.message }}
+    <!-- Toast Notifications -->
+    <div class="fixed top-4 right-4 z-50 space-y-2">
+      <div v-for="toast in toasts" :key="toast.id" :class="['px-4 py-2 rounded shadow text-white', toast.type === 'success' ? 'bg-green-600' : 'bg-red-600']">
+        {{ toast.message }}
         </div>
       </div>
     </div>
@@ -72,9 +75,11 @@ const router = useRouter()
 const route = useRoute()
 const sidebarOpen = ref(false)
 
-function onNav(target: 'environment' | 'app' | 'settings') {
+function onNav(target: 'environment' | 'app' | 'settings' | 'connectors') {
   if (target === 'settings') {
     router.push('/settings')
+  } else if (target === 'connectors') {
+    router.push('/connectors')
   } else {
     viewMode.value = target
     if (route.path !== '/') router.push('/')
@@ -101,6 +106,7 @@ const pageTitle = computed(() => {
     return viewMode.value === 'environment' ? 'Environments Dashboard - Captain' : 'Applications Dashboard - Captain'
   }
   if (route.path.startsWith('/settings')) return 'Settings - Captain'
+  if (route.path.startsWith('/connectors')) return 'Connectors - Captain'
   if (route.path.startsWith('/manage-applications')) return 'Manage Applications - Captain'
   if (route.path.startsWith('/manage-environments')) return 'Manage Environments - Captain'
   if (route.path.startsWith('/deploy')) return 'Deploy - Captain'
