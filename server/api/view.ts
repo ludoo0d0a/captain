@@ -61,11 +61,6 @@ interface GroupedApplication {
   }>;
 }
 
-async function queryView(db: any, query: string) : Promise<ViewRow[]>{
-  const {results} = await db.prepare(query).all();
-  return results.map((v: ViewRow) => (v as ViewRow) );
-}
-
 export default defineEventHandler(async (event) => {
   if (event.method === 'GET') {
     const query = getQuery(event);
@@ -73,7 +68,7 @@ export default defineEventHandler(async (event) => {
 
     if (viewType === 'environments') {
       // Get environments with their deployments and related app/version info
-      const environments = await queryView(db, `
+      const environments = await db.query(`
         SELECT 
           e.id as envId,
           e.name as envName,
@@ -93,7 +88,7 @@ export default defineEventHandler(async (event) => {
         LEFT JOIN applications a ON d.appId = a.id
         LEFT JOIN versions v ON d.versionId = v.id
         ORDER BY e.name, a.name
-      `);
+      `) as ViewRow[];
 
       // Group by environment
       const groupedEnvironments = environments.reduce((acc: Record<string, GroupedEnvironment>, row: ViewRow) => {
@@ -137,7 +132,7 @@ export default defineEventHandler(async (event) => {
 
     } else if (viewType === 'applications') {
       // Get applications with their deployments and related env/version info
-      const applications = await queryView(db, `
+      const applications = await db.query(`
         SELECT 
           a.id as appId,
           a.name as appName,
@@ -157,7 +152,7 @@ export default defineEventHandler(async (event) => {
         LEFT JOIN environments e ON d.envId = e.id
         LEFT JOIN versions v ON d.versionId = v.id
         ORDER BY a.name, e.name
-      `);
+      `) as ViewRow[];
 
       // Group by application
       const groupedApplications = applications.reduce((acc: Record<string, GroupedApplication>, row: ViewRow) => {
@@ -201,7 +196,7 @@ export default defineEventHandler(async (event) => {
 
     } else {
       // Return both views
-      const environments = await queryView(db, `
+      const environments = await db.query(`
         SELECT 
           e.id as envId,
           e.name as envName,
@@ -221,9 +216,9 @@ export default defineEventHandler(async (event) => {
         LEFT JOIN applications a ON d.appId = a.id
         LEFT JOIN versions v ON d.versionId = v.id
         ORDER BY e.name, a.name
-      `);
+      `) as ViewRow[];
 
-      const applications = await queryView(db,`
+      const applications = await db.query(`
         SELECT 
           a.id as appId,
           a.name as appName,
@@ -243,7 +238,7 @@ export default defineEventHandler(async (event) => {
         LEFT JOIN environments e ON d.envId = e.id
         LEFT JOIN versions v ON d.versionId = v.id
         ORDER BY a.name, e.name
-      `);
+      `) as ViewRow[];
 
       // Group environments
       const groupedEnvironments = environments.reduce((acc: Record<string, GroupedEnvironment>, row: ViewRow) => {

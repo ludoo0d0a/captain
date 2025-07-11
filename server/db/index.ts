@@ -1,32 +1,53 @@
-// import Database from 'better-sqlite3';
-//const db = new Database('data.db'); 
+import { DatabaseAdapter } from './abstract';
+import { SQLiteAdapter } from './sqlite';
+import { D1Adapter } from './d1';
 
-const db = hubDatabase()
+let db: DatabaseAdapter;
 
-export function createTables() {
-  // Applications table
-  // id: string, name: string, tags: string (JSON)
-  db.prepare(`
+export function getDatabase(): DatabaseAdapter {
+  if (!db) {
+    if (process.env.NODE_ENV === 'production') {
+      // Use Cloudflare D1 in production
+      try {
+        const d1Db = hubDatabase();
+        db = new D1Adapter(d1Db);
+      } catch (error) {
+        console.error('Failed to initialize D1 database:', error);
+        throw new Error('D1 database not available');
+      }
+    } else {
+      // Use SQLite in development
+      try {
+        db = new SQLiteAdapter('data.db');
+      } catch (error) {
+        console.error('Failed to initialize SQLite database:', error);
+        throw new Error('SQLite database not available');
+      }
+    }
+  }
+  return db;
+}
+
+export async function createTables() {
+  const database = getDatabase();
+  
+  await database.execute(`
     CREATE TABLE IF NOT EXISTS applications (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       tags TEXT
     )
-  `).run();
+  `);
 
-  // Environments table
-  // id: string, name: string, tags: string (JSON)
-  db.prepare(`
+  await database.execute(`
     CREATE TABLE IF NOT EXISTS environments (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       tags TEXT
     )
-  `).run();
+  `);
 
-  // Versions table
-  // id: string, appId: string, name: string, createdAt: string, isSnapshot: int, metadata: string (JSON)
-  db.prepare(`
+  await database.execute(`
     CREATE TABLE IF NOT EXISTS versions (
       id TEXT PRIMARY KEY,
       appId TEXT NOT NULL,
@@ -35,11 +56,9 @@ export function createTables() {
       isSnapshot INTEGER,
       metadata TEXT
     )
-  `).run();
+  `);
 
-  // Deployments table
-  // id: string, appId: string, envId: string, versionId: string, status: string, deployedAt: string
-  db.prepare(`
+  await database.execute(`
     CREATE TABLE IF NOT EXISTS deployments (
       id TEXT PRIMARY KEY,
       appId TEXT NOT NULL,
@@ -48,20 +67,22 @@ export function createTables() {
       status TEXT,
       deployedAt TEXT
     )
-  `).run();
+  `);
 }
 
-// Function to clear all data
-export function clearDatabase() {
-  db.prepare('DELETE FROM deployments').run();
-  db.prepare('DELETE FROM versions').run();
-  db.prepare('DELETE FROM environments').run();
-  db.prepare('DELETE FROM applications').run();
+export async function clearDatabase() {
+  const database = getDatabase();
+  
+  await database.execute('DELETE FROM deployments');
+  await database.execute('DELETE FROM versions');
+  await database.execute('DELETE FROM environments');
+  await database.execute('DELETE FROM applications');
 }
 
-// Function to prefill with mock data
-export function prefillWithMockData() {
-  clearDatabase();
+export async function prefillWithMockData() {
+  await clearDatabase();
+  
+  const database = getDatabase();
   
   // Mock applications
   const mockApps = [
@@ -107,20 +128,24 @@ export function prefillWithMockData() {
   ];
   
   // Insert mock data
-  const insertApp = db.prepare('INSERT INTO applications (id, name, tags) VALUES (?, ?, ?)');
-  const insertEnv = db.prepare('INSERT INTO environments (id, name, tags) VALUES (?, ?, ?)');
-  const insertVersion = db.prepare('INSERT INTO versions (id, appId, name, createdAt, isSnapshot, metadata) VALUES (?, ?, ?, ?, ?, ?)');
-  const insertDeployment = db.prepare('INSERT INTO deployments (id, appId, envId, versionId, status, deployedAt) VALUES (?, ?, ?, ?, ?, ?)');
+  for (const app of mockApps) {
+    await database.execute('INSERT INTO applications (id, name, tags) VALUES (?, ?, ?)', [app.id, app.name, app.tags]);
+  }
   
-  mockApps.forEach(app => insertApp.bind(app.id, app.name, app.tags).run());
-  mockEnvs.forEach(env => insertEnv.bind(env.id, env.name, env.tags).run());
-  mockVersions.forEach(version => insertVersion.bind(version.id, version.appId, version.name, version.createdAt, version.isSnapshot, version.metadata).run());
-  mockDeployments.forEach(deployment => insertDeployment.bind(deployment.id, deployment.appId, deployment.envId, deployment.versionId, deployment.status, deployment.deployedAt).run());
-
-  // mockApps.forEach(app => insertApp.run(app.id, app.name, app.tags));
-  // mockEnvs.forEach(env => insertEnv.run(env.id, env.name, env.tags));
-  // mockVersions.forEach(version => insertVersion.run(version.id, version.appId, version.name, version.createdAt, version.isSnapshot, version.metadata));
-  // mockDeployments.forEach(deployment => insertDeployment.run(deployment.id, deployment.appId, deployment.envId, deployment.versionId, deployment.status, deployment.deployedAt));
+  for (const env of mockEnvs) {
+    await database.execute('INSERT INTO environments (id, name, tags) VALUES (?, ?, ?)', [env.id, env.name, env.tags]);
+  }
+  
+  for (const version of mockVersions) {
+    await database.execute('INSERT INTO versions (id, appId, name, createdAt, isSnapshot, metadata) VALUES (?, ?, ?, ?, ?, ?)', 
+      [version.id, version.appId, version.name, version.createdAt, version.isSnapshot, version.metadata]);
+  }
+  
+  for (const deployment of mockDeployments) {
+    await database.execute('INSERT INTO deployments (id, appId, envId, versionId, status, deployedAt) VALUES (?, ?, ?, ?, ?, ?)', 
+      [deployment.id, deployment.appId, deployment.envId, deployment.versionId, deployment.status, deployment.deployedAt]);
+  }
 }
 
-export default db; 
+// Export the database instance for direct use
+export default getDatabase(); 

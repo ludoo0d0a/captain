@@ -1,22 +1,22 @@
 import { defineEventHandler, readBody } from 'h3';
-import { clearDatabase, prefillWithMockData } from '../db';
+import { clearDatabase, prefillWithMockData } from '../db/index';
 
 export default defineEventHandler(async (event) => {
   if (event.method === 'POST') {
-    const body = await readBody(event);
+    const { action } = await readBody(event);
     
-    if (body.action === 'clear') {
-      clearDatabase();
+    if (action === 'clear') {
+      await clearDatabase();
       return { success: true, message: 'Database cleared successfully' };
     }
     
-    if (body.action === 'prefill') {
-      prefillWithMockData();
-      return { success: true, message: 'Database prefilled with mock data successfully' };
+    if (action === 'prefill') {
+      await prefillWithMockData();
+      return { success: true, message: 'Database prefilled with mock data' };
     }
     
-    return { success: false, message: 'Invalid action' };
+    return { error: 'Invalid action' };
   }
   
-  return { success: false, message: 'Method not allowed' };
+  return { error: 'Method not allowed' };
 }); 

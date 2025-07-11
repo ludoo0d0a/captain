@@ -1,22 +1,22 @@
-import db from '../db';
 import { defineEventHandler, readBody } from 'h3';
+import db from '../db';
 
 export default defineEventHandler(async (event) => {
   if (event.method === 'GET') {
-    const envs = await db.prepare('SELECT * FROM environments').all();
-    return envs.results.map(env => ({ ...env, tags: env.tags ? JSON.parse(env.tags as string) : [] }));
+    const envs = await db.query('SELECT * FROM environments');
+    return envs.map((env: any) => ({ ...env, tags: env.tags ? JSON.parse(env.tags) : [] }));
   }
 
   if (event.method === 'POST') {
     const body = await readBody(event);
-    db.prepare('INSERT INTO environments (id, name, tags) VALUES (?, ?, ?)')
-      .bind(body.id, body.name, JSON.stringify(body.tags || [])).run();
+    await db.execute('INSERT INTO environments (id, name, tags) VALUES (?, ?, ?)', 
+      [body.id, body.name, JSON.stringify(body.tags || [])]);
     return { success: true };
   }
 
   if (event.method === 'DELETE') {
     const { id } = await readBody(event);
-    db.prepare('DELETE FROM environments WHERE id = ?').bind(id).run();
+    await db.execute('DELETE FROM environments WHERE id = ?', [id]);
     return { success: true };
   }
 }); 
