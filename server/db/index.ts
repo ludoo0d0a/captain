@@ -13,7 +13,7 @@ export function getDatabase(): DatabaseAdapter {
         db = new D1Adapter(d1Db);
       } catch (error) {
         console.error('Failed to initialize D1 database:', error);
-        throw new Error('D1 database not available');
+        throw new Error('D1 database not available - '+error);
       }
     } else {
       // Use SQLite in development
