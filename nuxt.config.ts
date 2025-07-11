@@ -12,8 +12,18 @@ export default defineNuxtConfig({
         tailwindcss(),
       ],
     },
-    modules: [
-      '@pinia/nuxt',
-      // ...other modules
-    ],
+    hub: {
+      database: true,
+      //kv: true,
+      //blob: true,
+      //cache: true,
+    },
+    nitro: {
+      experimental: {
+        // Enable Server API documentation within NuxtHub
+        openAPI: true
+      }
+    },
+    modules: [// ...other modules
+    '@pinia/nuxt', '@nuxthub/core'],
   })

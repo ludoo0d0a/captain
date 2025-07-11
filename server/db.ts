@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 
-const db = new Database('data.db'); // Creates data.db in project root
+//const db = new Database('data.db'); // Creates data.db in project root
+const db = hubDatabase()
 
 // Applications table
 // id: string, name: string, tags: string (JSON)
