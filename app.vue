@@ -1,37 +1,18 @@
 <template>
   <div class="min-h-screen bg-gray-50 flex flex-col md:flex-row" :class="{ 'overflow-hidden': sidebarOpen }">
     <!-- Sidebar -->
-    <aside :class="[
-      'bg-white border-r flex flex-col z-30 fixed md:static top-0 left-0 h-full w-64',
-      'transition-transform duration-300 ease-in-out',
-      sidebarOpen ? 'translate-x-0 shadow-2xl md:shadow-none backdrop-blur-md' : '-translate-x-full',
-      'md:translate-x-0 md:w-64 md:relative md:h-auto'
-    ]" tabindex="-1" aria-label="Sidebar">
-      <div class="h-16 flex items-center justify-center font-bold text-xl border-b">Captain</div>
-      <nav class="flex-1 p-4 space-y-2">
-        <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 block md:hidden focus:outline-none focus:ring-2 focus:ring-blue-400" @click="sidebarOpen = false" aria-label="Close sidebar">
-          <span class="i-heroicons-x-mark mr-2" /> Close
-        </button>
-        <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400" :class="{ 'bg-gray-200': viewMode === 'environment' }" @click="onNav('environment')">
-          <span class="i-heroicons-globe-alt mr-2" /> Environments
-        </button>
-        <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400" :class="{ 'bg-gray-200': viewMode === 'app' }" @click="onNav('app')">
-          <span class="i-heroicons-cube mr-2" /> Applications
-        </button>
-        <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400" @click="onNav('connectors')">
-          <span class="i-heroicons-link mr-2" /> Connectors
-        </button>
-      </nav>
-      <div class="p-4 border-t">
-        <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 block focus:outline-none focus:ring-2 focus:ring-blue-400" @click="onNav('settings')">
-          <span class="i-heroicons-cog-6-tooth mr-2" /> Settings
-        </button>
-      </div>
-    </aside>
+    <AppSidebar 
+      :sidebar-open="sidebarOpen"
+      :view-mode="viewMode"
+      @close-sidebar="sidebarOpen = false"
+      @update-view-mode="viewMode = $event"
+    />
+    
     <!-- Sidebar overlay for mobile -->
     <transition name="fade">
       <div v-if="sidebarOpen" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-20 md:hidden transition-all duration-300 ease-in-out" @click="sidebarOpen = false"></div>
     </transition>
+    
     <!-- Main Content -->
     <div class="flex-1 flex flex-col min-h-screen">
       <!-- Topbar -->
@@ -75,17 +56,7 @@ const router = useRouter()
 const route = useRoute()
 const sidebarOpen = ref(false)
 
-function onNav(target: 'environment' | 'app' | 'settings' | 'connectors') {
-  if (target === 'settings') {
-    router.push('/settings')
-  } else if (target === 'connectors') {
-    router.push('/connectors')
-  } else {
-    viewMode.value = target
-    if (route.path !== '/') router.push('/')
-  }
-  sidebarOpen.value = false
-}
+
 
 // Prevent body scroll when sidebar is open on mobile
 onMounted(() => {
