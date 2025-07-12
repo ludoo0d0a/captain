@@ -32,7 +32,7 @@ jobs:
         run: pnpm install
 
       - name: Build
-        run: pnpm run generate
+        run: pnpm run generate:github
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
