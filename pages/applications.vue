@@ -128,8 +128,8 @@
 <script setup lang="ts">
 import { ref, inject, computed, onMounted } from 'vue'
 import { useConnectorsStore } from '~/stores/connectors'
-import TagBadge from './TagBadge.vue'
-import QuickFilter from './QuickFilter.vue'
+import TagBadge from '~/components/TagBadge.vue'
+import QuickFilter from '~/components/QuickFilter.vue'
 
 interface AggregatedApplication {
   id: string;

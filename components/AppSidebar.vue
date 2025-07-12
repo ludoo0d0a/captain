@@ -21,20 +21,12 @@
       <!-- Main Menu -->
       <div v-if="!isSettingsMode">
         <!-- Dashboard Views -->
-        <button 
-          class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400" 
-          :class="{ 'bg-gray-200': viewMode === 'environment' }" 
-          @click="onNav('environment')"
-        >
+        <NuxtLink to="/environments" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 block">
           <span class="i-heroicons-globe-alt mr-2" /> Environments
-        </button>
-        <button 
-          class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400" 
-          :class="{ 'bg-gray-200': viewMode === 'app' }" 
-          @click="onNav('app')"
-        >
+        </NuxtLink>
+        <NuxtLink to="/applications" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 block">
           <span class="i-heroicons-cube mr-2" /> Applications
-        </button>
+        </NuxtLink>
         
         <!-- Settings Button -->
         <div class="border-t pt-2 mt-4">
@@ -101,12 +93,10 @@ import { useRouter } from 'vue-router'
 
 interface Props {
   sidebarOpen: boolean
-  viewMode: 'environment' | 'app'
 }
 
 interface Emits {
   (e: 'close-sidebar'): void
-  (e: 'update-view-mode', mode: 'environment' | 'app'): void
   (e: 'settings-mode-change', isSettings: boolean): void
   (e: 'connector-selected', connectorId: string): void
 }
@@ -131,11 +121,7 @@ const connectorTypes = [
   { id: 'googleplaystore', label: 'Google Play Store', icon: 'i-heroicons-device-phone-mobile' }
 ]
 
-function onNav(target: 'environment' | 'app') {
-  emit('update-view-mode', target)
-  if (router.currentRoute.value.path !== '/') router.push('/')
-  emit('close-sidebar')
-}
+
 
 function switchToSettings() {
   isSettingsMode.value = true

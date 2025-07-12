@@ -1,11 +1,10 @@
 <template>
   <div>
-    <DashboardEnvironments v-if="viewMode === 'environment'" />
-    <DashboardApplications v-else-if="viewMode === 'app'" />
+    <!-- Redirect to applications page -->
   </div>
 </template>
 
 <script setup lang="ts">
-// Inject the viewMode from the parent app
-const viewMode = inject('viewMode') as Ref<'environment' | 'app'>
+// Redirect to applications page by default
+await navigateTo('/applications')
 </script> 

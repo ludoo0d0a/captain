@@ -3,9 +3,7 @@
     <!-- Sidebar -->
     <AppSidebar 
       :sidebar-open="sidebarOpen"
-      :view-mode="viewMode"
       @close-sidebar="sidebarOpen = false"
-      @update-view-mode="viewMode = $event"
       @settings-mode-change="handleSettingsModeChange"
       @connector-selected="handleConnectorSelected"
     />
@@ -165,7 +163,6 @@ import { ref, provide, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useHead } from '#imports'
 
-const viewMode = ref<'environment' | 'app'>('environment')
 const router = useRouter()
 const route = useRoute()
 const sidebarOpen = ref(false)
@@ -211,7 +208,9 @@ function getPageTitle() {
     if (selectedConnector.value) return `${selectedConnector.value.label} Settings`
     return 'Settings'
   }
-  return viewMode.value === 'environment' ? 'Environments Dashboard' : 'Applications Dashboard'
+  if (route.path === '/applications') return 'Applications Dashboard'
+  if (route.path === '/environments') return 'Environments Dashboard'
+  return 'Applications Dashboard'
 }
 
 // Prevent body scroll when sidebar is open on mobile
@@ -235,9 +234,8 @@ const pageTitle = computed(() => {
     if (selectedConnector.value) return `${selectedConnector.value.label} Settings - Captain`
     return 'Settings - Captain'
   }
-  if (route.path === '/') {
-    return viewMode.value === 'environment' ? 'Environments Dashboard - Captain' : 'Applications Dashboard - Captain'
-  }
+  if (route.path === '/applications') return 'Applications Dashboard - Captain'
+  if (route.path === '/environments') return 'Environments Dashboard - Captain'
   if (route.path.startsWith('/connectors')) return 'Connectors - Captain'
   if (route.path.startsWith('/manage-applications')) return 'Manage Applications - Captain'
   if (route.path.startsWith('/manage-environments')) return 'Manage Environments - Captain'
@@ -258,7 +256,6 @@ function showToast(message: string, type: 'success' | 'error' = 'success') {
   }, 3000)
 }
 provide('showToast', showToast)
-provide('viewMode', viewMode)
 
 // Placeholder functions for settings
 async function saveConnectorConfig(connectorId: string) {
