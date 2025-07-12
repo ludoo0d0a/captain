@@ -48,7 +48,7 @@
             </div>
           </template>
           <template v-else>
-            <span v-for="tag in env.tags || []" :key="tag" class="inline-block bg-gray-100 text-gray-700 text-xs rounded px-2 py-1 mr-1 min-w-[2.5rem] text-center">{{ tag }}</span>
+            <TagBadge v-for="tag in env.tags || []" :key="tag" :tag="tag" class="mr-1" />
             <span v-if="!env.tags || !env.tags.length" class="inline-block text-gray-400 text-xs">—</span>
           </template>
           <button v-if="editingEnvId !== env.id" class="p-1 rounded hover:bg-gray-100" @click="startEnvEdit(env)" title="Edit environment">
@@ -83,6 +83,7 @@ import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useEnvironmentsStore } from '~/stores/environments'
 import type { Environment } from '~/stores/environments'
+import TagBadge from '~/components/TagBadge.vue'
 
 const environmentsStore = useEnvironmentsStore()
 const { environments, loading } = storeToRefs(environmentsStore)
