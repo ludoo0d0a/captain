@@ -203,6 +203,7 @@ function getPageTitle() {
     return 'Settings'
   }
   if (route.path === '/applications') return 'Applications Dashboard'
+  if (route.path.startsWith('/applications/')) return 'Edit application'
   if (route.path === '/environments') return 'Environments Dashboard'
   return 'Applications Dashboard'
 }
