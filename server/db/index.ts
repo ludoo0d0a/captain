@@ -93,6 +93,16 @@ export async function createTables() {
       updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  await database.execute(`
+    CREATE TABLE IF NOT EXISTS settings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      scope TEXT NOT NULL,
+      key TEXT NOT NULL,
+      value TEXT,
+      UNIQUE(scope, key)
+    )
+  `);
 }
 
 export async function clearDatabase() {

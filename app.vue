@@ -83,18 +83,12 @@
           </div>
 
           <!-- Connector Configuration -->
-          <div v-else-if="selectedConnector" class="bg-white rounded shadow p-8 w-full max-w-lg">
-            <h2 class="text-2xl font-bold mb-4">{{ selectedConnector.label }} Settings</h2>
-            <p class="text-sm text-gray-600 mb-6">
-              Configure connection settings for {{ selectedConnector.label }}.
-            </p>
-            
-            <form @submit.prevent="saveConnectorConfig(selectedConnector.id)">
-              <!-- Form content will be added here -->
-              <button type="submit" class="mt-6 px-4 py-2 rounded text-sm font-semibold bg-blue-500 text-white hover:bg-blue-600" :disabled="saving">
-                {{ saving ? 'Saving...' : 'Save Configuration' }}
-              </button>
-            </form>
+          <div v-else-if="selectedConnector" class="w-full max-w-2xl">
+            <ConnectorSettingsForm 
+              :connector-id="selectedConnector.id"
+              @saved="handleSettingsSaved"
+              @cancel="handleSettingsCancel"
+            />
           </div>
 
           <!-- Database Management -->
@@ -257,17 +251,13 @@ function showToast(message: string, type: 'success' | 'error' = 'success') {
 }
 provide('showToast', showToast)
 
-// Placeholder functions for settings
-async function saveConnectorConfig(connectorId: string) {
-  saving.value = true
-  try {
-    // Implementation will be added
-    showToast('Configuration saved successfully!', 'success')
-  } catch (error) {
-    showToast('Failed to save configuration', 'error')
-  } finally {
-    saving.value = false
-  }
+// Settings handlers
+function handleSettingsSaved() {
+  showToast('Settings saved successfully!', 'success')
+}
+
+function handleSettingsCancel() {
+  selectedConnectorId.value = ''
 }
 
 async function clearDatabase() {
