@@ -69,24 +69,24 @@
         </div>
 
         <!-- Environment Versions -->
-        <div class="bg-white shadow rounded-lg">
-          <div class="px-6 py-4 border-b border-gray-200">
+        <div class="space-y-6">
+          <div class="px-6 py-4 border-b border-gray-200 bg-white shadow rounded-lg">
             <h3 class="text-lg font-medium text-gray-900">Environment Versions</h3>
             <p class="mt-1 text-sm text-gray-600">
               Select which version to deploy in each environment.
             </p>
           </div>
           
-          <div v-if="environments.length === 0" class="p-6 text-center text-gray-500">
+          <div v-if="environments.length === 0" class="bg-white shadow rounded-lg p-6 text-center text-gray-500">
             No environments found. Please create environments first.
           </div>
           
-          <div v-else class="divide-y divide-gray-200">
-            <div v-for="env in environments" :key="env.id" class="p-6">
-              <div class="flex items-center justify-between mb-4">
+          <div v-else class="space-y-6">
+            <div v-for="env in environments" :key="env.id" class="bg-white shadow rounded-lg p-6">
+              <div class="flex items-center justify-between mb-6">
                 <div>
-                  <h4 class="text-lg font-medium text-gray-900">{{ env.name }}</h4>
-                  <div class="mt-1">
+                  <h4 class="text-xl font-semibold text-gray-900">{{ env.name }}</h4>
+                  <div class="mt-2">
                     <TagBadge v-for="tag in env.tags" :key="tag" :tag="tag" class="mr-1" />
                     <span v-if="!env.tags || !env.tags.length" class="text-gray-400 text-sm">No tags</span>
                   </div>
@@ -94,7 +94,7 @@
                 <div class="flex items-center space-x-2">
                   <NuxtLink 
                     :to="{ path: '/deploy', query: { appId: application.id, envId: env.id } }"
-                    class="px-3 py-1 text-sm border border-blue-300 text-blue-700 rounded hover:bg-blue-50"
+                    class="px-4 py-2 text-sm border border-blue-300 text-blue-700 rounded-md hover:bg-blue-50 transition-colors"
                   >
                     Deploy New
                   </NuxtLink>
@@ -102,9 +102,9 @@
               </div>
 
               <!-- Current Deployment -->
-              <div class="mb-4">
-                <h5 class="text-sm font-medium text-gray-700 mb-2">Current Deployment</h5>
-                <div v-if="getCurrentDeployment(env.id)" class="bg-gray-50 rounded-lg p-4">
+              <div class="mb-6">
+                <h5 class="text-sm font-medium text-gray-700 mb-3">Current Deployment</h5>
+                <div v-if="getCurrentDeployment(env.id)" class="bg-gray-50 rounded-lg p-4 border">
                   <div class="flex items-center justify-between">
                     <div>
                       <span :class="[getCurrentDeployment(env.id)?.version?.isSnapshot ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800', 'px-2 py-1 rounded text-xs font-mono']">
@@ -119,39 +119,39 @@
                     </div>
                   </div>
                 </div>
-                <div v-else class="bg-gray-50 rounded-lg p-4 text-center text-gray-500">
+                <div v-else class="bg-gray-50 rounded-lg p-4 text-center text-gray-500 border">
                   No deployment found
                 </div>
               </div>
 
               <!-- Version Selection -->
               <div>
-                <h5 class="text-sm font-medium text-gray-700 mb-2">Available Versions</h5>
-                <div v-if="getAvailableVersions().length === 0" class="text-center text-gray-500 py-4">
+                <h5 class="text-sm font-medium text-gray-700 mb-3">Available Versions</h5>
+                <div v-if="getAvailableVersions().length === 0" class="text-center text-gray-500 py-6 bg-gray-50 rounded-lg border">
                   No versions found for this application.
                 </div>
-                <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div 
                     v-for="version in getAvailableVersions()" 
                     :key="version.id"
-                    class="border rounded-lg p-3 cursor-pointer transition-colors"
+                    class="border rounded-lg p-4 cursor-pointer transition-all duration-200 hover:shadow-md"
                     :class="[
                       selectedVersions[env.id] === version.id 
-                        ? 'border-blue-500 bg-blue-50' 
+                        ? 'border-blue-500 bg-blue-50 shadow-md' 
                         : 'border-gray-200 hover:border-gray-300'
                     ]"
                     @click="selectVersion(env.id, version.id)"
                   >
                     <div class="flex items-center justify-between">
-                      <div>
+                      <div class="flex-1">
                         <span :class="[version.isSnapshot ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800', 'px-2 py-1 rounded text-xs font-mono']">
                           {{ version.name }}
                         </span>
-                        <p class="text-xs text-gray-500 mt-1">
+                        <p class="text-xs text-gray-500 mt-2">
                           {{ formatDate(version.createdAt) }}
                         </p>
                       </div>
-                      <div v-if="selectedVersions[env.id] === version.id" class="text-blue-600">
+                      <div v-if="selectedVersions[env.id] === version.id" class="text-blue-600 ml-3">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                         </svg>
