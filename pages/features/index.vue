@@ -82,7 +82,7 @@
               </div>
               <div class="flex items-center space-x-2">
                 <NuxtLink
-                  :to="`/features/${feature.id}/edit`"
+                  :to="`/features/${feature.id}`"
                   class="text-gray-400 hover:text-gray-600"
                   title="Edit feature"
                 >
