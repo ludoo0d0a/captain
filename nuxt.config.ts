@@ -30,6 +30,7 @@ export default defineNuxtConfig({
     },
     modules: [
       '@pinia/nuxt', 
-      '@nuxthub/core'
+      '@nuxthub/core',
+      '@nuxt/icon'
     ],
   })
