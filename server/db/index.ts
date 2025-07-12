@@ -82,6 +82,27 @@ export async function createTables() {
   `);
 
   await database.execute(`
+    CREATE TABLE IF NOT EXISTS features (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      ticketNumber TEXT,
+      link TEXT,
+      createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+      updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await database.execute(`
+    CREATE TABLE IF NOT EXISTS feature_applications (
+      featureId TEXT NOT NULL,
+      applicationId TEXT NOT NULL,
+      PRIMARY KEY (featureId, applicationId),
+      FOREIGN KEY (featureId) REFERENCES features (id) ON DELETE CASCADE,
+      FOREIGN KEY (applicationId) REFERENCES applications (id) ON DELETE CASCADE
+    )
+  `);
+
+  await database.execute(`
     CREATE TABLE IF NOT EXISTS connectors (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -112,6 +133,8 @@ export async function clearDatabase() {
   await database.execute('DELETE FROM versions');
   await database.execute('DELETE FROM environments');
   await database.execute('DELETE FROM applications');
+  await database.execute('DELETE FROM feature_applications');
+  await database.execute('DELETE FROM features');
   await database.execute('DELETE FROM connectors');
 }
 
@@ -163,6 +186,30 @@ export async function prefillWithMockData() {
     { id: 'dep-11', appId: 'app-5', envId: 'env-3', versionId: 'ver-7', status: 'deployed', deployedAt: '2024-01-11T15:00:00Z' }
   ];
   
+  // Mock features
+  const mockFeatures = [
+    { id: 'feature-1', name: 'User Authentication', ticketNumber: 'AUTH-001', link: 'https://jira.company.com/browse/AUTH-001' },
+    { id: 'feature-2', name: 'Payment Integration', ticketNumber: 'PAY-002', link: 'https://jira.company.com/browse/PAY-002' },
+    { id: 'feature-3', name: 'Real-time Notifications', ticketNumber: 'NOTIF-003', link: 'https://jira.company.com/browse/NOTIF-003' },
+    { id: 'feature-4', name: 'Admin Dashboard', ticketNumber: 'ADMIN-004', link: 'https://jira.company.com/browse/ADMIN-004' },
+    { id: 'feature-5', name: 'Mobile Push Notifications', ticketNumber: 'MOBILE-005', link: 'https://jira.company.com/browse/MOBILE-005' },
+    { id: 'feature-6', name: 'API Rate Limiting', ticketNumber: 'API-006', link: 'https://jira.company.com/browse/API-006' }
+  ];
+  
+  // Mock feature-application relationships
+  const mockFeatureApps = [
+    { featureId: 'feature-1', applicationId: 'app-1' },
+    { featureId: 'feature-1', applicationId: 'app-2' },
+    { featureId: 'feature-2', applicationId: 'app-2' },
+    { featureId: 'feature-2', applicationId: 'app-5' },
+    { featureId: 'feature-3', applicationId: 'app-1' },
+    { featureId: 'feature-3', applicationId: 'app-3' },
+    { featureId: 'feature-4', applicationId: 'app-4' },
+    { featureId: 'feature-5', applicationId: 'app-3' },
+    { featureId: 'feature-6', applicationId: 'app-2' },
+    { featureId: 'feature-6', applicationId: 'app-5' }
+  ];
+  
   // Insert mock data
   for (const app of mockApps) {
     await database.execute('INSERT INTO applications (id, name, tags) VALUES (?, ?, ?)', [app.id, app.name, app.tags]);
@@ -180,6 +227,16 @@ export async function prefillWithMockData() {
   for (const deployment of mockDeployments) {
     await database.execute('INSERT INTO deployments (id, appId, envId, versionId, status, deployedAt) VALUES (?, ?, ?, ?, ?, ?)', 
       [deployment.id, deployment.appId, deployment.envId, deployment.versionId, deployment.status, deployment.deployedAt]);
+  }
+
+  for (const feature of mockFeatures) {
+    await database.execute('INSERT INTO features (id, name, ticketNumber, link) VALUES (?, ?, ?, ?)', 
+      [feature.id, feature.name, feature.ticketNumber, feature.link]);
+  }
+
+  for (const featureApp of mockFeatureApps) {
+    await database.execute('INSERT INTO feature_applications (featureId, applicationId) VALUES (?, ?)', 
+      [featureApp.featureId, featureApp.applicationId]);
   }
 }
 

@@ -203,8 +203,8 @@ function getPageTitle() {
     return 'Settings'
   }
   if (route.path === '/applications') return 'Applications Dashboard'
-  if (route.path.startsWith('/applications/')) return 'Edit application'
   if (route.path === '/environments') return 'Environments Dashboard'
+  if (route.path === '/features') return 'Features'
   return 'Applications Dashboard'
 }
 
@@ -231,6 +231,7 @@ const pageTitle = computed(() => {
   }
   if (route.path === '/applications') return 'Applications Dashboard - Captain'
   if (route.path === '/environments') return 'Environments Dashboard - Captain'
+  if (route.path === '/features') return 'Features - Captain'
   if (route.path.startsWith('/connectors')) return 'Connectors - Captain'
   if (route.path.startsWith('/manage-applications')) return 'Manage Applications - Captain'
   if (route.path.startsWith('/manage-environments')) return 'Manage Environments - Captain'

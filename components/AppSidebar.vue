@@ -27,6 +27,9 @@
         <NuxtLink to="/applications" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 block">
           <span class="i-heroicons-cube mr-2" /> Applications
         </NuxtLink>
+        <NuxtLink to="/features" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 block">
+          <span class="i-heroicons-document-text mr-2" /> Features
+        </NuxtLink>
         
         <!-- Settings Button -->
         <div class="border-t pt-2 mt-4">
