@@ -6,6 +6,8 @@
       :view-mode="viewMode"
       @close-sidebar="sidebarOpen = false"
       @update-view-mode="viewMode = $event"
+      @settings-mode-change="handleSettingsModeChange"
+      @connector-selected="handleConnectorSelected"
     />
     
     <!-- Sidebar overlay for mobile -->
@@ -24,7 +26,7 @@
             </svg>
           </button>
           <div class="text-lg font-semibold">
-          {{ viewMode === 'environment' ? 'Environments' : 'Applications' }} Dashboard
+            {{ getPageTitle() }}
           </div>
         </div>
         <div>
@@ -33,9 +35,120 @@
       </header>
       <!-- Dashboard Content -->
       <main class="flex-1 overflow-y-auto p-4 md:p-6">
-        <DashboardEnvironments v-if="$route.path === '/' && viewMode === 'environment'" />
-        <DashboardApplications v-else-if="$route.path === '/' && viewMode === 'app'" />
-        <NuxtPage v-else />
+        <!-- Settings Content -->
+        <div v-if="isSettingsMode" class="flex-1 flex flex-col items-center justify-center">
+          <!-- Welcome/Overview -->
+          <div v-if="!selectedConnector && selectedConnectorId !== 'database' && selectedConnectorId !== 'connectors'" class="bg-white rounded shadow p-8 w-full max-w-4xl">
+            <h2 class="text-2xl font-bold mb-4">Settings Overview</h2>
+            <p class="text-sm text-gray-600 mb-6">
+              Configure your application settings, connectors, and system preferences.
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Connectors Section -->
+              <div class="border rounded-lg p-6">
+                <h3 class="text-lg font-semibold mb-3 flex items-center">
+                  <span class="i-heroicons-link mr-2" /> Connectors
+                </h3>
+                <p class="text-sm text-gray-600 mb-4">
+                  Configure third-party integrations for your applications and deployments.
+                </p>
+                <div class="space-y-2">
+                  <div v-for="connector in connectorTypes.slice(0, 5)" :key="connector.id" class="flex items-center text-sm">
+                    <span :class="[connector.icon, 'h-4 w-4 mr-2 text-gray-500']" />
+                    {{ connector.label }}
+                  </div>
+                  <div class="text-xs text-gray-400 mt-2">+ {{ connectorTypes.length - 5 }} more connectors</div>
+                </div>
+              </div>
+              
+              <!-- System Section -->
+              <div class="border rounded-lg p-6">
+                <h3 class="text-lg font-semibold mb-3 flex items-center">
+                  <span class="i-heroicons-cog-6-tooth mr-2" /> System
+                </h3>
+                <p class="text-sm text-gray-600 mb-4">
+                  Manage database, connectors, and system preferences.
+                </p>
+                <div class="space-y-2">
+                  <div class="flex items-center text-sm">
+                    <span class="i-heroicons-database h-4 w-4 mr-2 text-gray-500" />
+                    Database Management
+                  </div>
+                  <div class="flex items-center text-sm">
+                    <span class="i-heroicons-link h-4 w-4 mr-2 text-gray-500" />
+                    Connector Management
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Connector Configuration -->
+          <div v-else-if="selectedConnector" class="bg-white rounded shadow p-8 w-full max-w-lg">
+            <h2 class="text-2xl font-bold mb-4">{{ selectedConnector.label }} Settings</h2>
+            <p class="text-sm text-gray-600 mb-6">
+              Configure connection settings for {{ selectedConnector.label }}.
+            </p>
+            
+            <form @submit.prevent="saveConnectorConfig(selectedConnector.id)">
+              <!-- Form content will be added here -->
+              <button type="submit" class="mt-6 px-4 py-2 rounded text-sm font-semibold bg-blue-500 text-white hover:bg-blue-600" :disabled="saving">
+                {{ saving ? 'Saving...' : 'Save Configuration' }}
+              </button>
+            </form>
+          </div>
+
+          <!-- Database Management -->
+          <div v-else-if="selectedConnectorId === 'database'" class="bg-white rounded shadow p-8 w-full max-w-lg">
+            <h2 class="text-2xl font-bold mb-4">Database Management</h2>
+            <div class="space-y-4">
+              <div class="flex items-center gap-4">
+                <button 
+                  @click="clearDatabase" 
+                  :disabled="dbLoading"
+                  class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50"
+                >
+                  {{ dbLoading ? 'Clearing...' : 'Clear Database' }}
+                </button>
+                <button 
+                  @click="prefillDatabase" 
+                  :disabled="dbLoading"
+                  class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50"
+                >
+                  {{ dbLoading ? 'Prefilling...' : 'Prefill with Mock Data' }}
+                </button>
+              </div>
+              <p class="text-sm text-gray-600">
+                Clear database removes all data. Prefill adds sample applications, environments, versions, and deployments for testing.
+              </p>
+            </div>
+          </div>
+
+          <!-- Connector Management -->
+          <div v-else-if="selectedConnectorId === 'connectors'" class="bg-white rounded shadow p-8 w-full max-w-lg">
+            <h2 class="text-2xl font-bold mb-4">Connector Management</h2>
+            <p class="text-sm text-gray-600 mb-6">
+              Manage your third-party integrations and their configurations.
+            </p>
+            <div class="space-y-4">
+              <button 
+                @click="$router.push('/connectors')"
+                class="w-full bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600"
+              >
+                Manage Connectors
+              </button>
+              <p class="text-sm text-gray-600">
+                View, add, edit, and delete connectors. Test connections and manage settings for all your integrations.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Regular Page Content -->
+        <div v-else>
+          <NuxtPage />
+        </div>
       </main>
     <!-- Toast Notifications -->
     <div class="fixed top-4 right-4 z-50 space-y-2">
@@ -51,12 +164,55 @@
 import { ref, provide, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useHead } from '#imports'
+
 const viewMode = ref<'environment' | 'app'>('environment')
 const router = useRouter()
 const route = useRoute()
 const sidebarOpen = ref(false)
 
+// Settings mode state
+const isSettingsMode = ref(false)
+const selectedConnectorId = ref('')
+const saving = ref(false)
+const dbLoading = ref(false)
 
+const connectorTypes = [
+  { id: 'github', label: 'GitHub', icon: 'i-heroicons-code-bracket' },
+  { id: 'gitlab', label: 'GitLab', icon: 'i-heroicons-command-line' },
+  { id: 'docker', label: 'Docker', icon: 'i-heroicons-cube' },
+  { id: 'kubernetes', label: 'Kubernetes', icon: 'i-heroicons-cog-6-tooth' },
+  { id: 'githubactions', label: 'GitHub Actions', icon: 'i-heroicons-play' },
+  { id: 'http', label: 'HTTP API', icon: 'i-heroicons-globe-alt' },
+  { id: 'jenkins', label: 'Jenkins', icon: 'i-heroicons-wrench-screwdriver' },
+  { id: 'ssh', label: 'SSH', icon: 'i-heroicons-computer-desktop' },
+  { id: 'xldeploy', label: 'XL Deploy', icon: 'i-heroicons-server' },
+  { id: 'googleplaystore', label: 'Google Play Store', icon: 'i-heroicons-device-phone-mobile' }
+]
+
+const selectedConnector = computed(() => 
+  connectorTypes.find(c => c.id === selectedConnectorId.value)
+)
+
+function handleSettingsModeChange(isSettings: boolean) {
+  isSettingsMode.value = isSettings
+  if (!isSettings) {
+    selectedConnectorId.value = ''
+  }
+}
+
+function handleConnectorSelected(connectorId: string) {
+  selectedConnectorId.value = connectorId
+}
+
+function getPageTitle() {
+  if (isSettingsMode.value) {
+    if (selectedConnectorId.value === 'database') return 'Database Management'
+    if (selectedConnectorId.value === 'connectors') return 'Connector Management'
+    if (selectedConnector.value) return `${selectedConnector.value.label} Settings`
+    return 'Settings'
+  }
+  return viewMode.value === 'environment' ? 'Environments Dashboard' : 'Applications Dashboard'
+}
 
 // Prevent body scroll when sidebar is open on mobile
 onMounted(() => {
@@ -73,10 +229,15 @@ onUnmounted(() => {
 })
 
 const pageTitle = computed(() => {
+  if (isSettingsMode.value) {
+    if (selectedConnectorId.value === 'database') return 'Database Management - Captain'
+    if (selectedConnectorId.value === 'connectors') return 'Connector Management - Captain'
+    if (selectedConnector.value) return `${selectedConnector.value.label} Settings - Captain`
+    return 'Settings - Captain'
+  }
   if (route.path === '/') {
     return viewMode.value === 'environment' ? 'Environments Dashboard - Captain' : 'Applications Dashboard - Captain'
   }
-  if (route.path.startsWith('/settings')) return 'Settings - Captain'
   if (route.path.startsWith('/connectors')) return 'Connectors - Captain'
   if (route.path.startsWith('/manage-applications')) return 'Manage Applications - Captain'
   if (route.path.startsWith('/manage-environments')) return 'Manage Environments - Captain'
@@ -97,6 +258,54 @@ function showToast(message: string, type: 'success' | 'error' = 'success') {
   }, 3000)
 }
 provide('showToast', showToast)
+provide('viewMode', viewMode)
+
+// Placeholder functions for settings
+async function saveConnectorConfig(connectorId: string) {
+  saving.value = true
+  try {
+    // Implementation will be added
+    showToast('Configuration saved successfully!', 'success')
+  } catch (error) {
+    showToast('Failed to save configuration', 'error')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function clearDatabase() {
+  dbLoading.value = true
+  try {
+    const result = await $fetch('/api/database', { method: 'POST', body: { action: 'clear' } })
+    if (result.success) {
+      showToast('Database cleared successfully!', 'success')
+      window.location.reload()
+    } else {
+      showToast('Failed to clear database', 'error')
+    }
+  } catch (error) {
+    showToast('Failed to clear database', 'error')
+  } finally {
+    dbLoading.value = false
+  }
+}
+
+async function prefillDatabase() {
+  dbLoading.value = true
+  try {
+    const result = await $fetch('/api/database', { method: 'POST', body: { action: 'prefill' } })
+    if (result.success) {
+      showToast('Database prefilled with mock data successfully!', 'success')
+      window.location.reload()
+    } else {
+      showToast('Failed to prefill database', 'error')
+    }
+  } catch (error) {
+    showToast('Failed to prefill database', 'error')
+  } finally {
+    dbLoading.value = false
+  }
+}
 </script>
 
 <style scoped>
