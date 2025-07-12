@@ -19,7 +19,13 @@
     <div v-else class="bg-white rounded shadow p-6">
       <div class="flex items-center mb-4">
         <h3 class="text-xl font-semibold flex-1">Applications</h3>
-        <input v-model="filter" class="border rounded px-2 py-1 text-sm ml-4 w-64" placeholder="Quick filter by name or tag" />
+        <QuickFilter
+          v-model="filter"
+          :all-tags="allTags"
+          :selected-tags="selectedTags"
+          @update:selectedTags="val => selectedTags = val"
+          class="ml-4 w-full max-w-xl"
+        />
         <button 
           @click="refreshApplications" 
           :disabled="loading"
@@ -84,6 +90,7 @@ import { storeToRefs } from 'pinia'
 import { useApplicationsStore } from '~/stores/applications'
 import type { Application } from '~/stores/applications'
 import TagBadge from '~/components/TagBadge.vue'
+import QuickFilter from '~/components/QuickFilter.vue'
 
 const applicationsStore = useApplicationsStore()
 const { applications, loading } = storeToRefs(applicationsStore)
@@ -94,16 +101,13 @@ const editingAppId = ref('')
 const editAppName = ref('')
 const editAppTagsInput = ref('')
 const filter = ref('')
+const selectedTags = ref<string[]>([])
 
 onMounted(async () => {
-  console.log('Applications page onMounted called')
   await applicationsStore.fetchApplications()
-  console.log('Applications loaded:', applications.value.length)
 })
 
-// Also ensure data is loaded if onMounted doesn't work
 if (applications.value.length === 0) {
-  console.log('No applications found, fetching...')
   applicationsStore.fetchApplications()
 }
 
@@ -113,12 +117,13 @@ const allTags = computed(() => {
   return Array.from(tags).sort()
 })
 const filteredApps = computed(() => {
-  if (!filter.value.trim()) return applications.value
   const f = filter.value.trim().toLowerCase()
-  return applications.value.filter((a: Application) =>
-    a.name.toLowerCase().includes(f) ||
-    (a.tags && a.tags.some((tag: string) => tag.toLowerCase().includes(f)))
-  )
+  return applications.value.filter((a: Application) => {
+    const tags = a.tags || []
+    const matchesText = !f || a.name.toLowerCase().includes(f) || tags.some((tag: string) => tag.toLowerCase().includes(f))
+    const matchesTags = selectedTags.value.length === 0 || selectedTags.value.every(tag => tags.includes(tag))
+    return matchesText && matchesTags
+  })
 })
 // Autocomplete for new tags
 const newTagSuggestions = ref<string[]>([])

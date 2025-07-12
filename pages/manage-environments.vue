@@ -19,7 +19,13 @@
     <div v-else class="bg-white rounded shadow p-6">
       <div class="flex items-center mb-4">
         <h3 class="text-xl font-semibold flex-1">Environments</h3>
-        <input v-model="filter" class="border rounded px-2 py-1 text-sm ml-4 w-64" placeholder="Quick filter by name or tag" />
+        <QuickFilter
+          v-model="filter"
+          :all-tags="allTags"
+          :selected-tags="selectedTags"
+          @update:selectedTags="val => selectedTags = val"
+          class="ml-4 w-full max-w-xl"
+        />
         <button 
           @click="refreshEnvironments" 
           :disabled="loading"
@@ -84,6 +90,7 @@ import { storeToRefs } from 'pinia'
 import { useEnvironmentsStore } from '~/stores/environments'
 import type { Environment } from '~/stores/environments'
 import TagBadge from '~/components/TagBadge.vue'
+import QuickFilter from '~/components/QuickFilter.vue'
 
 const environmentsStore = useEnvironmentsStore()
 const { environments, loading } = storeToRefs(environmentsStore)
@@ -94,16 +101,13 @@ const editingEnvId = ref('')
 const editEnvName = ref('')
 const editEnvTagsInput = ref('')
 const filter = ref('')
+const selectedTags = ref<string[]>([])
 
 onMounted(async () => {
-  console.log('Environments page onMounted called')
   await environmentsStore.fetchEnvironments()
-  console.log('Environments loaded:', environments.value.length)
 })
 
-// Also ensure data is loaded if onMounted doesn't work
 if (environments.value.length === 0) {
-  console.log('No environments found, fetching...')
   environmentsStore.fetchEnvironments()
 }
 
@@ -113,12 +117,13 @@ const allTags = computed(() => {
   return Array.from(tags).sort()
 })
 const filteredEnvs = computed(() => {
-  if (!filter.value.trim()) return environments.value
   const f = filter.value.trim().toLowerCase()
-  return environments.value.filter((e: Environment) =>
-    e.name.toLowerCase().includes(f) ||
-    (e.tags && e.tags.some((tag: string) => tag.toLowerCase().includes(f)))
-  )
+  return environments.value.filter((e: Environment) => {
+    const tags = e.tags || []
+    const matchesText = !f || e.name.toLowerCase().includes(f) || tags.some((tag: string) => tag.toLowerCase().includes(f))
+    const matchesTags = selectedTags.value.length === 0 || selectedTags.value.every(tag => tags.includes(tag))
+    return matchesText && matchesTags
+  })
 })
 // Autocomplete for new tags
 const newTagSuggestions = ref<string[]>([])

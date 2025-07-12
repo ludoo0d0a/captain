@@ -31,7 +31,14 @@
 
     <div v-else>
       <div class="flex items-center mb-4">
-        <input v-model="filter" class="border rounded px-3 py-2 text-sm w-64" placeholder="Filter by application name or tags..." />
+        <QuickFilter
+          v-model="filter"
+          :all-tags="allTags"
+          :selected-tags="selectedTags"
+          @update:selectedTags="val => selectedTags = val"
+          placeholder="Filter by application name or tags..."
+          class="w-full max-w-xl"
+        />
       </div>
 
       <div class="space-y-6">
@@ -122,6 +129,7 @@
 import { ref, inject, computed, onMounted } from 'vue'
 import { useConnectorsStore } from '~/stores/connectors'
 import TagBadge from './TagBadge.vue'
+import QuickFilter from './QuickFilter.vue'
 
 interface AggregatedApplication {
   id: string;
@@ -152,6 +160,10 @@ const showToast = inject('showToast') as (msg: string, type?: 'success' | 'error
 const refreshingAll = ref(false)
 const refreshingAppId = ref('')
 const connectorInstances = computed(() => connectorsStore.connectorInstances.filter((c: any) => c !== null))
+
+// Filter state
+const filter = ref('')
+const selectedTags = ref<string[]>([])
 
 // Load aggregated view data
 async function loadApplicationsView() {
@@ -224,34 +236,19 @@ async function refreshApplication(appId: string) {
 }
 
 // Filter applications based on tags
-const filter = ref('')
-const filterTags = computed(() => {
-  return filter.value.split(/[,\s]+/).map(w => w.trim().toLowerCase()).filter(Boolean)
-})
-function toggleFilterTag(tag: string) {
-  const tags = filterTags.value.slice()
-  const idx = tags.indexOf(tag.toLowerCase())
-  if (idx === -1) {
-    tags.push(tag.toLowerCase())
-  } else {
-    tags.splice(idx, 1)
-  }
-  filter.value = tags.join(', ')
-}
 const allTags = computed(() => {
   const tags = new Set<string>()
   applications.value.forEach(a => (a.tags || []).forEach(t => tags.add(t)))
   return Array.from(tags).sort()
 })
 const filteredApps = computed(() => {
-  if (!filter.value.trim()) return applications.value
-  const words = filter.value.split(/[,\s]+/).map(w => w.trim().toLowerCase()).filter(Boolean)
-  return applications.value.filter(app =>
-    words.every(f =>
-      app.name.toLowerCase().includes(f) ||
-      (app.tags && app.tags.some(tag => tag.toLowerCase().includes(f)))
-    )
-  )
+  const f = filter.value.trim().toLowerCase()
+  return applications.value.filter(app => {
+    const tags = app.tags || []
+    const matchesText = !f || app.name.toLowerCase().includes(f) || tags.some(tag => tag.toLowerCase().includes(f))
+    const matchesTags = selectedTags.value.length === 0 || selectedTags.value.every(tag => tags.includes(tag))
+    return matchesText && matchesTags
+  })
 })
 
 // Helper functions for deployment data

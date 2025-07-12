@@ -31,7 +31,14 @@
 
     <div v-else>
       <div class="flex items-center mb-4">
-        <input v-model="filter" class="border rounded px-3 py-2 text-sm w-64" placeholder="Filter by environment name or tags..." />
+        <QuickFilter
+          v-model="filter"
+          :all-tags="allTags"
+          :selected-tags="selectedTags"
+          @update:selectedTags="val => selectedTags = val"
+          placeholder="Filter by environment name or tags..."
+          class="w-full max-w-xl"
+        />
       </div>
 
       <div class="bg-white rounded shadow overflow-hidden">
@@ -118,6 +125,7 @@
 import { ref, inject, computed, onMounted } from 'vue'
 import { useConnectorsStore } from '~/stores/connectors'
 import TagBadge from './TagBadge.vue'
+import QuickFilter from './QuickFilter.vue'
 
 interface AggregatedEnvironment {
   id: string;
@@ -148,6 +156,10 @@ const showToast = inject('showToast') as (msg: string, type?: 'success' | 'error
 const refreshingAll = ref(false)
 const refreshingEnvId = ref('')
 const connectorInstances = computed(() => connectorsStore.connectorInstances.filter((c: any) => c !== null))
+
+// Filter state
+const filter = ref('')
+const selectedTags = ref<string[]>([])
 
 // Load aggregated view data
 async function loadEnvironmentsView() {
@@ -220,34 +232,19 @@ async function refreshEnvironment(envId: string) {
 }
 
 // Filter environments based on tags
-const filter = ref('')
-const filterTags = computed(() => {
-  return filter.value.split(/[,\s]+/).map(w => w.trim().toLowerCase()).filter(Boolean)
-})
-function toggleFilterTag(tag: string) {
-  const tags = filterTags.value.slice()
-  const idx = tags.indexOf(tag.toLowerCase())
-  if (idx === -1) {
-    tags.push(tag.toLowerCase())
-  } else {
-    tags.splice(idx, 1)
-  }
-  filter.value = tags.join(', ')
-}
 const allTags = computed(() => {
   const tags = new Set<string>()
   environments.value.forEach(e => (e.tags || []).forEach(t => tags.add(t)))
   return Array.from(tags).sort()
 })
 const filteredEnvs = computed(() => {
-  if (!filter.value.trim()) return environments.value
-  const words = filter.value.split(/[,\s]+/).map(w => w.trim().toLowerCase()).filter(Boolean)
-  return environments.value.filter(env =>
-    words.every(f =>
-      env.name.toLowerCase().includes(f) ||
-      (env.tags && env.tags.some(tag => tag.toLowerCase().includes(f)))
-    )
-  )
+  const f = filter.value.trim().toLowerCase()
+  return environments.value.filter(env => {
+    const tags = env.tags || []
+    const matchesText = !f || env.name.toLowerCase().includes(f) || tags.some(tag => tag.toLowerCase().includes(f))
+    const matchesTags = selectedTags.value.length === 0 || selectedTags.value.every(tag => tags.includes(tag))
+    return matchesText && matchesTags
+  })
 })
 
 // Helper functions for deployment data
