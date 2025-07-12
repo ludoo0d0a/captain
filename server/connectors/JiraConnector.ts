@@ -1,4 +1,5 @@
-import fetch from 'node-fetch';
+import { request } from 'undici';
+import { getGlobalProxyAgent } from '../utils/proxy';
 
 export class JiraConnector {
   baseUrl: string;
@@ -13,16 +14,19 @@ export class JiraConnector {
 
   async testConnection(): Promise<{ success: boolean; message: string }> {
     try {
-      const response = await fetch(`${this.baseUrl}/rest/api/3/myself`, {
+      const proxyAgent = await getGlobalProxyAgent();
+      const { statusCode, body } = await request(`${this.baseUrl}/rest/api/3/myself`, {
+        method: 'GET',
         headers: {
           'Authorization': 'Basic ' + Buffer.from(`${this.email}:${this.apiToken}`).toString('base64'),
           'Accept': 'application/json'
-        }
+        },
+        dispatcher: proxyAgent
       });
-      if (!response.ok) {
-        return { success: false, message: `Jira API error: ${response.status} ${response.statusText}` };
+      if (statusCode !== 200) {
+        return { success: false, message: `Jira API error: ${statusCode}` };
       }
-      const data = await response.json();
+      const data = await body.json();
       if (data && data.accountId) {
         return { success: true, message: `Connected as ${data.displayName}` };
       }

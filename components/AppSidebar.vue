@@ -77,6 +77,12 @@
           >
             <span class="i-heroicons-database mr-2" /> Database Management
           </button>
+          <NuxtLink
+            to="/settings/network"
+            class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 text-sm flex items-center"
+          >
+            <span class="i-heroicons-globe-alt mr-2" /> Network
+          </NuxtLink>
           <button
             class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 text-sm"
             :class="{ 'bg-gray-200 font-semibold': selectedConnectorId === 'connectors' }"
