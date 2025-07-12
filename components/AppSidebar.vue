@@ -15,20 +15,20 @@
         @click="$emit('close-sidebar')" 
         aria-label="Close sidebar"
       >
-        <span class="i-heroicons-x-mark mr-2" /> Close
+        <Icon name="heroicons:x-mark" class="w-4 h-4 mr-2" /> Close
       </button>
       
       <!-- Main Menu -->
       <div v-if="!isSettingsMode">
         <!-- Dashboard Views -->
         <NuxtLink to="/environments" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 block">
-          <span class="i-heroicons-globe-alt mr-2" /> Environments
+          <Icon name="heroicons:globe-alt" class="w-4 h-4 mr-2" /> Environments
         </NuxtLink>
         <NuxtLink to="/applications" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 block">
-          <span class="i-heroicons-cube mr-2" /> Applications
+          <Icon name="heroicons:cube" class="w-4 h-4 mr-2" /> Applications
         </NuxtLink>
         <NuxtLink to="/features" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 block">
-          <span class="i-heroicons-document-text mr-2" /> Features
+          <Icon name="heroicons:document-text" class="w-4 h-4 mr-2" /> Features
         </NuxtLink>
         
         <!-- Settings Button -->
@@ -37,7 +37,7 @@
             class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400" 
             @click="switchToSettings"
           >
-            <span class="i-heroicons-cog-6-tooth mr-2" /> Settings
+            <Icon name="heroicons:cog-6-tooth" class="w-4 h-4 mr-2" /> Settings
           </button>
         </div>
       </div>
@@ -49,7 +49,7 @@
           class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 font-semibold mb-2" 
           @click="switchToMain"
         >
-          <span class="i-heroicons-arrow-left mr-2" /> Back to Dashboard
+          <Icon name="heroicons:arrow-left" class="w-4 h-4 mr-2" /> Back to Dashboard
         </button>
         
         <!-- Connector Settings -->
@@ -62,7 +62,7 @@
             :class="{ 'bg-gray-200 font-semibold': selectedConnectorId === connector.id }"
             @click="selectConnector(connector.id)"
           >
-            <span :class="[connector.icon, 'h-4 w-4 mr-2 inline']" />
+            <Icon :name="connector.icon" class="w-4 h-4 mr-2" />
             {{ connector.label }}
           </button>
         </div>
@@ -75,20 +75,20 @@
             :class="{ 'bg-gray-200 font-semibold': selectedConnectorId === 'database' }"
             @click="selectConnector('database')"
           >
-            <span class="i-heroicons-database mr-2" /> Database Management
+            <Icon name="heroicons:database" class="w-4 h-4 mr-2" /> Database Management
           </button>
           <NuxtLink
             to="/settings/network"
             class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 text-sm flex items-center"
           >
-            <span class="i-heroicons-globe-alt mr-2" /> Network
+            <Icon name="heroicons:server" class="w-4 h-4 mr-2" /> Network
           </NuxtLink>
           <button
             class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 text-sm"
             :class="{ 'bg-gray-200 font-semibold': selectedConnectorId === 'connectors' }"
             @click="selectConnector('connectors')"
           >
-            <span class="i-heroicons-link mr-2" /> Connector Management
+            <Icon name="heroicons:link" class="w-4 h-4 mr-2" /> Connector Management
           </button>
         </div>
       </div>
@@ -118,20 +118,18 @@ const isSettingsMode = ref(false)
 const selectedConnectorId = ref('')
 
 const connectorTypes = [
-  { id: 'github', label: 'GitHub', icon: 'i-heroicons-code-bracket' },
-  { id: 'gitlab', label: 'GitLab', icon: 'i-heroicons-command-line' },
-  { id: 'docker', label: 'Docker', icon: 'i-heroicons-cube' },
-  { id: 'kubernetes', label: 'Kubernetes', icon: 'i-heroicons-cog-6-tooth' },
-  { id: 'githubactions', label: 'GitHub Actions', icon: 'i-heroicons-play' },
-  { id: 'http', label: 'HTTP API', icon: 'i-heroicons-globe-alt' },
-  { id: 'jenkins', label: 'Jenkins', icon: 'i-heroicons-wrench-screwdriver' },
-  { id: 'ssh', label: 'SSH', icon: 'i-heroicons-computer-desktop' },
-  { id: 'xldeploy', label: 'XL Deploy', icon: 'i-heroicons-server' },
-  { id: 'googleplaystore', label: 'Google Play Store', icon: 'i-heroicons-device-phone-mobile' },
-  { id: 'jira', label: 'Jira', icon: 'i-heroicons-clipboard-document-list' }
+  { id: 'github', label: 'GitHub', icon: 'heroicons:code-bracket' },
+  { id: 'gitlab', label: 'GitLab', icon: 'heroicons:command-line' },
+  { id: 'docker', label: 'Docker', icon: 'heroicons:cube' },
+  { id: 'kubernetes', label: 'Kubernetes', icon: 'heroicons:cog-6-tooth' },
+  { id: 'githubactions', label: 'GitHub Actions', icon: 'heroicons:play' },
+  { id: 'http', label: 'HTTP API', icon: 'heroicons:globe-alt' },
+  { id: 'jenkins', label: 'Jenkins', icon: 'heroicons:wrench-screwdriver' },
+  { id: 'ssh', label: 'SSH', icon: 'heroicons:computer-desktop' },
+  { id: 'xldeploy', label: 'XL Deploy', icon: 'heroicons:server' },
+  { id: 'googleplaystore', label: 'Google Play Store', icon: 'heroicons:device-phone-mobile' },
+  { id: 'jira', label: 'Jira', icon: 'heroicons:clipboard-document-list' }
 ]
-
-
 
 function switchToSettings() {
   isSettingsMode.value = true
