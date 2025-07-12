@@ -365,5 +365,37 @@ export const connectorSettingsMeta: Record<string, ConnectorMeta> = {
         isCredential: true
       }
     ]
+  },
+  jira: {
+    id: 'jira',
+    label: 'Jira',
+    icon: 'i-heroicons-clipboard-document-list',
+    fields: [
+      {
+        type: 'url',
+        name: 'baseUrl',
+        value: '',
+        label: 'Jira Base URL',
+        required: true,
+        placeholder: 'https://your-domain.atlassian.net'
+      },
+      {
+        type: 'text',
+        name: 'email',
+        value: '',
+        label: 'Email/Username',
+        required: true,
+        placeholder: 'your@email.com'
+      },
+      {
+        type: 'password',
+        name: 'apiToken',
+        value: '',
+        label: 'API Token',
+        required: true,
+        placeholder: 'Jira API Token',
+        isCredential: true
+      }
+    ]
   }
 }; 

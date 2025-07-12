@@ -121,7 +121,8 @@ const connectorTypes = [
   { id: 'jenkins', label: 'Jenkins', icon: 'i-heroicons-wrench-screwdriver' },
   { id: 'ssh', label: 'SSH', icon: 'i-heroicons-computer-desktop' },
   { id: 'xldeploy', label: 'XL Deploy', icon: 'i-heroicons-server' },
-  { id: 'googleplaystore', label: 'Google Play Store', icon: 'i-heroicons-device-phone-mobile' }
+  { id: 'googleplaystore', label: 'Google Play Store', icon: 'i-heroicons-device-phone-mobile' },
+  { id: 'jira', label: 'Jira', icon: 'i-heroicons-clipboard-document-list' }
 ]
 
 

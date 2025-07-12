@@ -213,10 +213,23 @@ async function saveSettings() {
 async function testConnection() {
   testing.value = true
   try {
-    // This would call the connector's test method
-    // For now, just simulate a test
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    showToast && showToast('Connection test successful!', 'success')
+    if (props.connectorId === 'jira') {
+      const { baseUrl, email, apiToken } = settings.value
+      const result = await $fetch('/api/connectors/jira', {
+        method: 'POST',
+        body: { baseUrl, email, apiToken }
+      })
+      if (result.success) {
+        showToast && showToast(result.message || 'Jira connection successful!', 'success')
+      } else {
+        showToast && showToast(result.message || 'Jira connection failed', 'error')
+      }
+    } else {
+      // This would call the connector's test method
+      // For now, just simulate a test
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      showToast && showToast('Connection test successful!', 'success')
+    }
   } catch (error) {
     console.error('Connection test failed:', error)
     showToast && showToast('Connection test failed', 'error')
