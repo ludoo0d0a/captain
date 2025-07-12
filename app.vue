@@ -232,6 +232,8 @@ const pageTitle = computed(() => {
   if (route.path === '/applications') return 'Applications Dashboard - Captain'
   if (route.path === '/environments') return 'Environments Dashboard - Captain'
   if (route.path === '/features') return 'Features - Captain'
+  if (route.path === '/features/add') return 'Add Feature - Captain'
+  if (route.path.startsWith('/features/') && route.path.includes('/edit')) return 'Edit Feature - Captain'
   if (route.path.startsWith('/connectors')) return 'Connectors - Captain'
   if (route.path.startsWith('/manage-applications')) return 'Manage Applications - Captain'
   if (route.path.startsWith('/manage-environments')) return 'Manage Environments - Captain'

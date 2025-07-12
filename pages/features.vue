@@ -19,12 +19,12 @@
               <span v-if="loading">Refreshing...</span>
               <span v-else>Refresh</span>
             </button>
-            <button
-              @click="showAddModal = true"
+            <NuxtLink
+              to="/features/add"
               class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Add Feature
-            </button>
+            </NuxtLink>
           </div>
         </div>
       </div>
@@ -81,15 +81,15 @@
                 </div>
               </div>
               <div class="flex items-center space-x-2">
-                <button
-                  @click="editFeature(feature)"
+                <NuxtLink
+                  :to="`/features/${feature.id}/edit`"
                   class="text-gray-400 hover:text-gray-600"
                   title="Edit feature"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
-                </button>
+                </NuxtLink>
                 <button
                   @click="deleteFeature(feature.id)"
                   class="text-gray-400 hover:text-red-600"
@@ -152,87 +152,13 @@
             {{ searchTerm || selectedTags.length > 0 ? 'Try adjusting your search criteria.' : 'Get started by creating a new feature.' }}
           </p>
           <div class="mt-6">
-            <button
-              @click="showAddModal = true"
+            <NuxtLink
+              to="/features/add"
               class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Add Feature
-            </button>
+            </NuxtLink>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Add/Edit Feature Modal -->
-    <div v-if="showAddModal || editingFeature" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">
-            {{ editingFeature ? 'Edit Feature' : 'Add New Feature' }}
-          </h3>
-          
-          <form @submit.prevent="saveFeature">
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Name</label>
-                <input
-                  v-model="featureForm.name"
-                  type="text"
-                  required
-                  class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Ticket Number</label>
-                <input
-                  v-model="featureForm.ticketNumber"
-                  type="text"
-                  class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Link</label>
-                <input
-                  v-model="featureForm.link"
-                  type="url"
-                  class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Associated Applications</label>
-                <select
-                  v-model="featureForm.applicationIds"
-                  multiple
-                  class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option v-for="app in applications" :key="app.id" :value="app.id">
-                    {{ app.name }}
-                  </option>
-                </select>
-                <p class="mt-1 text-xs text-gray-500">Hold Ctrl/Cmd to select multiple applications</p>
-              </div>
-            </div>
-            
-            <div class="flex justify-end space-x-3 mt-6">
-              <button
-                type="button"
-                @click="cancelEdit"
-                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                :disabled="saving"
-                class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
-              >
-                {{ saving ? 'Saving...' : (editingFeature ? 'Update' : 'Create') }}
-              </button>
-            </div>
-          </form>
         </div>
       </div>
     </div>
@@ -247,23 +173,12 @@ import TagBadge from '~/components/TagBadge.vue'
 const showToast = inject('showToast') as (msg: string, type?: 'success' | 'error') => void
 
 const loading = ref(false)
-const saving = ref(false)
 const features = ref<any[]>([])
 const applications = ref<any[]>([])
-const showAddModal = ref(false)
-const editingFeature = ref<any>(null)
 
 // Filter state
 const searchTerm = ref('')
 const selectedTags = ref<string[]>([])
-
-// Form state
-const featureForm = ref({
-  name: '',
-  ticketNumber: '',
-  link: '',
-  applicationIds: [] as string[]
-})
 
 // Computed properties
 const availableTags = computed(() => {
@@ -325,59 +240,6 @@ async function loadData() {
 async function refreshData() {
   await loadData()
   showToast('Data refreshed successfully', 'success')
-}
-
-function editFeature(feature: any) {
-  editingFeature.value = feature
-  featureForm.value = {
-    name: feature.name,
-    ticketNumber: feature.ticketNumber || '',
-    link: feature.link || '',
-    applicationIds: feature.applications?.map((app: any) => app.id) || []
-  }
-}
-
-function cancelEdit() {
-  showAddModal.value = false
-  editingFeature.value = null
-  featureForm.value = {
-    name: '',
-    ticketNumber: '',
-    link: '',
-    applicationIds: []
-  }
-}
-
-async function saveFeature() {
-  saving.value = true
-  try {
-    const payload = {
-      ...featureForm.value,
-      id: editingFeature.value?.id || `feature-${Date.now()}`
-    }
-
-    if (editingFeature.value) {
-      await $fetch('/api/features', {
-        method: 'PUT',
-        body: payload
-      })
-      showToast('Feature updated successfully', 'success')
-    } else {
-      await $fetch('/api/features', {
-        method: 'POST',
-        body: payload
-      })
-      showToast('Feature created successfully', 'success')
-    }
-
-    await loadData()
-    cancelEdit()
-  } catch (error) {
-    console.error('Failed to save feature:', error)
-    showToast('Failed to save feature', 'error')
-  } finally {
-    saving.value = false
-  }
 }
 
 async function deleteFeature(featureId: string) {
