@@ -206,9 +206,40 @@ export async function prefillWithMockData() {
     { featureId: 'feature-3', versionId: 'ver-1' },
     { featureId: 'feature-3', versionId: 'ver-6' },
     { featureId: 'feature-4', versionId: 'ver-7' },
-    { featureId: 'feature-5', versionId: 'ver-8' },
     { featureId: 'feature-6', versionId: 'ver-3' },
     { featureId: 'feature-6', versionId: 'ver-5' }
+  ];
+
+  // Mock connectors
+  const mockConnectors = [
+    {
+      id: 'github',
+      name: 'GitHub',
+      type: 'github',
+      settings: JSON.stringify({ organization: 'my-org', repository: 'my-repo' }),
+      credentials: JSON.stringify({ token: 'ghp_xxx' }),
+      status: 'connected',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'gitlab',
+      name: 'GitLab',
+      type: 'gitlab',
+      settings: JSON.stringify({ baseUrl: 'https://gitlab.com' }),
+      credentials: JSON.stringify({ token: 'glpat_xxx' }),
+      status: 'disconnected',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+  ];
+
+  // Mock settings
+  const mockSettings = [
+    // Global setting
+    { scope: 'global', key: 'theme', value: JSON.stringify('dark'), connectorId: null },
+    // Connector-specific setting
+    { scope: 'connector', key: 'webhookUrl', value: JSON.stringify('https://hooks.example.com'), connectorId: 'github' }
   ];
   
   // Insert mock data
@@ -239,6 +270,22 @@ export async function prefillWithMockData() {
   for (const featureVersion of mockFeatureVersions) {
     await database.execute('INSERT INTO feature_versions (featureId, versionId) VALUES (?, ?)', 
       [featureVersion.featureId, featureVersion.versionId]);
+  }
+
+  // Insert mock connectors
+  for (const connector of mockConnectors) {
+    await database.execute(
+      'INSERT INTO connectors (id, name, type, settings, credentials, status, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [connector.id, connector.name, connector.type, connector.settings, connector.credentials, connector.status, connector.createdAt, connector.updatedAt]
+    );
+  }
+
+  // Insert mock settings
+  for (const setting of mockSettings) {
+    await database.execute(
+      'INSERT INTO settings (scope, key, value, connectorId) VALUES (?, ?, ?, ?)',
+      [setting.scope, setting.key, setting.value, setting.connectorId]
+    );
   }
 }
 
