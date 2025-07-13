@@ -56,6 +56,7 @@ interface GroupedApplication {
         name: string;
         isSnapshot: boolean;
         createdAt: string;
+        features: any[];
       };
     } | null;
   }>;
@@ -135,15 +136,21 @@ async function getApplicationsView() {
       v.id as versionId,
       v.name as versionName,
       v.isSnapshot,
-      v.createdAt as versionCreatedAt
+      v.createdAt as versionCreatedAt,
+      (
+        SELECT GROUP_CONCAT(f.id || ':' || f.name || ':' || IFNULL(f.ticketNumber, '') || ':' || IFNULL(f.link, ''))
+        FROM feature_versions fv
+        JOIN features f ON f.id = fv.featureId
+        WHERE fv.versionId = v.id
+      ) as featuresRaw
     FROM applications a
     LEFT JOIN deployments d ON a.id = d.appId
     LEFT JOIN environments e ON d.envId = e.id
     LEFT JOIN versions v ON d.versionId = v.id
     ORDER BY a.name, e.name
-  `) as ViewRow[];
+  `) as (ViewRow & { featuresRaw?: string })[];
 
-  const groupedApplications = applications.reduce((acc: Record<string, GroupedApplication>, row: ViewRow) => {
+  const groupedApplications = applications.reduce((acc: Record<string, GroupedApplication>, row) => {
     const appId = row.appId;
     if (!acc[appId]) {
       acc[appId] = {
@@ -156,6 +163,14 @@ async function getApplicationsView() {
     if (row.envId) {
       const existingEnv = acc[appId].environments.find((env: any) => env.id === row.envId);
       if (!existingEnv) {
+        // Parse features for this version
+        let features: any[] = [];
+        if (row.featuresRaw) {
+          features = row.featuresRaw.split(',').map((f: string) => {
+            const [id, name, ticketNumber, link] = f.split(':');
+            return { id, name, ticketNumber, link };
+          });
+        }
         acc[appId].environments.push({
           id: row.envId,
           name: row.envName,
@@ -168,7 +183,8 @@ async function getApplicationsView() {
               id: row.versionId,
               name: row.versionName,
               isSnapshot: !!row.isSnapshot,
-              createdAt: row.versionCreatedAt
+              createdAt: row.versionCreatedAt,
+              features
             }
           } : null
         });

@@ -105,14 +105,14 @@
                     <TagBadge v-for="env in getVersionEnvironments(app, version.id)" :key="env.id" :tag="env.name" />
                   </div>
                   <div v-else class="mt-2 text-xs text-gray-300">—</div>
-                  <!-- Features for this app -->
-                  <div class="mt-2 w-40">
-                    <div v-for="feature in getAppFeatures(app.id)" :key="feature.id" class="bg-gray-50 rounded px-2 py-1 mb-1 text-xs text-gray-700 flex items-center">
+                  <!-- Features for this version -->
+                  <div v-if="version.features && version.features.length" class="mt-2 w-40">
+                    <div v-for="feature in version.features" :key="feature.id" class="bg-blue-50 rounded px-2 py-1 mb-1 text-xs text-blue-800 flex items-center">
                       <span class="font-semibold">{{ feature.name }}</span>
-                      <span v-if="feature.ticketNumber" class="ml-2 text-gray-400">({{ feature.ticketNumber }})</span>
+                      <span v-if="feature.ticketNumber" class="ml-2 text-blue-400">({{ feature.ticketNumber }})</span>
                     </div>
-                    <div v-if="getAppFeatures(app.id).length === 0" class="text-xs text-gray-300">No features</div>
                   </div>
+                  <div v-else class="mt-2 text-xs text-gray-300">No features</div>
                 </div>
                 <!-- Timeline connector -->
                 <div v-if="!$last" class="h-1 w-16 bg-gray-300 mt-2"></div>
@@ -137,6 +137,13 @@
                     <span :class="[getDeployment(app, env.id)?.version?.isSnapshot ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800', 'px-2 py-1 rounded text-xs font-mono']">
                       {{ getDeployment(app, env.id)?.version?.name || 'Unknown' }}
                     </span>
+                    <div v-if="getVersionFeatures(getDeployment(app, env.id)?.version) && getVersionFeatures(getDeployment(app, env.id)?.version).length" class="mt-1">
+                      <div v-for="feature in getVersionFeatures(getDeployment(app, env.id)?.version)" :key="feature.id" class="bg-blue-50 rounded px-2 py-1 mb-1 text-xs text-blue-800 flex items-center">
+                        <span class="font-semibold">{{ feature.name }}</span>
+                        <span v-if="feature.ticketNumber" class="ml-2 text-blue-400">({{ feature.ticketNumber }})</span>
+                      </div>
+                    </div>
+                    <div v-else class="text-xs text-gray-300">No features</div>
                   </template>
                   <template v-else>
                     <span class="text-gray-300">—</span>
@@ -201,6 +208,7 @@ interface AggregatedApplication {
         name: string;
         isSnapshot: boolean;
         createdAt: string;
+        features?: { id: string; name: string; ticketNumber?: string }[];
       };
     } | null;
   }>;
@@ -266,7 +274,7 @@ onMounted(() => {
   loadApplicationsView()
 })
 
-watch(viewMode, val => {
+watch(viewMode, (val: 'full' | 'timeline' | 'table') => {
   localStorage.setItem('dashboard_viewMode', val)
 })
 
@@ -382,9 +390,20 @@ function getAllEnvironments(): { id: string; name: string; tags: string[] }[] {
 }
 
 function getAppVersions(appId: string) {
+  // Attach features to each version, always
   return allVersions.value
     .filter(v => v.appId === appId)
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    .map(version => {
+      // Prefer features from version object, else look up from allFeatures
+      let features = version.features;
+      if (!features || !Array.isArray(features)) {
+        features = allFeatures.value.filter((f: any) =>
+          (f.versions || []).some((ver: any) => ver.id === version.id)
+        ).map((f: any) => ({ id: f.id, name: f.name, ticketNumber: f.ticketNumber }));
+      }
+      return { ...version, features };
+    });
 }
 
 function getVersionEnvironments(app: any, versionId: string): { id: string; name: string; tags: string[] }[] {
@@ -398,5 +417,14 @@ function getAppFeatures(appId: string) {
   return allFeatures.value.filter((f: any) =>
     (f.applications || []).some((a: any) => a.id === appId)
   )
+}
+
+function getVersionFeatures(version: any) {
+  if (!version) return [];
+  if (version.features && Array.isArray(version.features)) return version.features;
+  // fallback: lookup from allFeatures
+  return allFeatures.value.filter((f: any) =>
+    (f.versions || []).some((ver: any) => ver.id === version.id)
+  ).map((f: any) => ({ id: f.id, name: f.name, ticketNumber: f.ticketNumber }));
 }
 </script> 
