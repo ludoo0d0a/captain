@@ -6,7 +6,7 @@
     'md:translate-x-0 md:w-64 md:relative md:h-auto'
   ]" tabindex="-1" aria-label="Sidebar">
     <div class="h-16 flex items-center justify-center font-bold text-xl border-b">
-      {{ isSettingsMode ? 'Settings' : 'Captain' }}
+      {{ $route.path.startsWith('/settings') ? 'Settings' : 'Captain' }}
     </div>
     <nav class="flex-1 p-4 space-y-2">
       <!-- Mobile close button -->
@@ -19,7 +19,7 @@
       </button>
       
       <!-- Main Menu -->
-      <div v-if="!isSettingsMode">
+      <div v-if="!$route.path.startsWith('/settings')">
         <!-- Dashboard Views -->
         <NuxtLink to="/environments" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 block">
           <Icon name="heroicons:globe-alt" class="w-4 h-4 mr-2" /> Environments
@@ -33,12 +33,13 @@
         
         <!-- Settings Button -->
         <div class="border-t pt-2 mt-4">
-          <button 
-            class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400" 
-            @click="switchToSettings"
+          <NuxtLink 
+            to="/settings"
+            class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 block"
+            :class="{ 'bg-gray-200 font-semibold': $route.path.startsWith('/settings') }"
           >
             <Icon name="heroicons:cog-6-tooth" class="w-4 h-4 mr-2" /> Settings
-          </button>
+          </NuxtLink>
         </div>
       </div>
       
@@ -51,45 +52,44 @@
         >
           <Icon name="heroicons:arrow-left" class="w-4 h-4 mr-2" /> Back to Dashboard
         </button>
-        
         <!-- Connector Settings -->
         <div class="mb-4">
-          <h3 class="text-sm font-semibold text-gray-600 mb-2 px-2">Connectors</h3>
-          <button
+          <h3 class="text-sm font-semibold text-gray-600 mb-2 px-2">Connector Settings</h3>
+          <NuxtLink
             v-for="connector in connectorTypes"
             :key="connector.id"
-            class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 text-sm"
-            :class="{ 'bg-gray-200 font-semibold': selectedConnectorId === connector.id }"
-            @click="selectConnector(connector.id)"
+            :to="`/settings/connectors/${connector.id}`"
+            class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 text-sm flex items-center"
+            :class="{ 'bg-gray-200 font-semibold': $route.params.connectorId === connector.id }"
           >
             <Icon :name="connector.icon" class="w-4 h-4 mr-2" />
             {{ connector.label }}
-          </button>
+          </NuxtLink>
         </div>
-
         <!-- System Settings -->
         <div class="mb-4">
           <h3 class="text-sm font-semibold text-gray-600 mb-2 px-2">System</h3>
-          <button
-            class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 text-sm"
-            :class="{ 'bg-gray-200 font-semibold': selectedConnectorId === 'database' }"
-            @click="selectConnector('database')"
+          <NuxtLink
+            to="/settings/database"
+            class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 text-sm flex items-center"
+            :class="{ 'bg-gray-200 font-semibold': $route.path === '/settings/database' }"
           >
-            <Icon name="heroicons:database" class="w-4 h-4 mr-2" /> Database Management
-          </button>
+            <Icon name="heroicons:server" class="w-4 h-4 mr-2" /> Databases
+          </NuxtLink>
           <NuxtLink
             to="/settings/network"
             class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 text-sm flex items-center"
+            :class="{ 'bg-gray-200 font-semibold': $route.path === '/settings/network' }"
           >
             <Icon name="heroicons:server" class="w-4 h-4 mr-2" /> Network
           </NuxtLink>
-          <button
-            class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 text-sm"
-            :class="{ 'bg-gray-200 font-semibold': selectedConnectorId === 'connectors' }"
-            @click="selectConnector('connectors')"
+          <NuxtLink
+            to="/settings/connectors"
+            class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 text-sm flex items-center"
+            :class="{ 'bg-gray-200 font-semibold': $route.path === '/connectors' }"
           >
-            <Icon name="heroicons:link" class="w-4 h-4 mr-2" /> Connector Management
-          </button>
+            <Icon name="heroicons:link" class="w-4 h-4 mr-2" /> Connectors
+          </NuxtLink>
         </div>
       </div>
     </nav>
@@ -98,7 +98,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 interface Props {
   sidebarOpen: boolean
@@ -112,9 +112,9 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const route = useRoute()
 const router = useRouter()
 
-const isSettingsMode = ref(false)
 const selectedConnectorId = ref('')
 
 const connectorTypes = [
@@ -131,16 +131,8 @@ const connectorTypes = [
   { id: 'jira', label: 'Jira', icon: 'heroicons:clipboard-document-list' }
 ]
 
-function switchToSettings() {
-  isSettingsMode.value = true
-  emit('settings-mode-change', true)
-  emit('close-sidebar')
-}
-
 function switchToMain() {
-  isSettingsMode.value = false
   selectedConnectorId.value = ''
-  emit('settings-mode-change', false)
   emit('close-sidebar')
 }
 

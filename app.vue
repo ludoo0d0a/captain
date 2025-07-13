@@ -66,13 +66,9 @@
                   <span class="i-heroicons-cog-6-tooth mr-2" /> System
                 </h3>
                 <p class="text-sm text-gray-600 mb-4">
-                  Manage database, connectors, and system preferences.
+                  Manage connectors and system preferences.
                 </p>
                 <div class="space-y-2">
-                  <div class="flex items-center text-sm">
-                    <span class="i-heroicons-database h-4 w-4 mr-2 text-gray-500" />
-                    Database Management
-                  </div>
                   <div class="flex items-center text-sm">
                     <span class="i-heroicons-link h-4 w-4 mr-2 text-gray-500" />
                     Connector Management
@@ -89,32 +85,6 @@
               @saved="handleSettingsSaved"
               @cancel="handleSettingsCancel"
             />
-          </div>
-
-          <!-- Database Management -->
-          <div v-else-if="selectedConnectorId === 'database'" class="bg-white rounded shadow p-8 w-full max-w-lg">
-            <h2 class="text-2xl font-bold mb-4">Database Management</h2>
-            <div class="space-y-4">
-              <div class="flex items-center gap-4">
-                <button 
-                  @click="clearDatabase" 
-                  :disabled="dbLoading"
-                  class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50"
-                >
-                  {{ dbLoading ? 'Clearing...' : 'Clear Database' }}
-                </button>
-                <button 
-                  @click="prefillDatabase" 
-                  :disabled="dbLoading"
-                  class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50"
-                >
-                  {{ dbLoading ? 'Prefilling...' : 'Prefill with Mock Data' }}
-                </button>
-              </div>
-              <p class="text-sm text-gray-600">
-                Clear database removes all data. Prefill adds sample applications, environments, versions, and deployments for testing.
-              </p>
-            </div>
           </div>
 
           <!-- Connector Management -->
@@ -165,7 +135,7 @@ const sidebarOpen = ref(false)
 const isSettingsMode = ref(false)
 const selectedConnectorId = ref('')
 const saving = ref(false)
-const dbLoading = ref(false)
+// dbLoading, clearDatabase, prefillDatabase removed
 
 const connectorTypes = [
   { id: 'github', label: 'GitHub', icon: 'i-heroicons-code-bracket' },
@@ -232,7 +202,7 @@ const pageTitle = computed(() => {
   if (route.path === '/applications') return 'Applications Dashboard - Captain'
   if (route.path === '/environments') return 'Environments Dashboard - Captain'
   if (route.path === '/features') return 'Features - Captain'
-  if (route.path === '/features/add') return 'Add Feature - Captain'
+  if (route.path.startsWith('/features/add')) return 'Add Feature - Captain'
   if (route.path.startsWith('/features/') && route.path.includes('/edit')) return 'Edit Feature - Captain'
   if (route.path.startsWith('/connectors')) return 'Connectors - Captain'
   if (route.path.startsWith('/manage-applications')) return 'Manage Applications - Captain'
@@ -262,40 +232,6 @@ function handleSettingsSaved() {
 
 function handleSettingsCancel() {
   selectedConnectorId.value = ''
-}
-
-async function clearDatabase() {
-  dbLoading.value = true
-  try {
-    const result = await $fetch('/api/database', { method: 'POST', body: { action: 'clear' } })
-    if (result.success) {
-      showToast('Database cleared successfully!', 'success')
-      window.location.reload()
-    } else {
-      showToast('Failed to clear database', 'error')
-    }
-  } catch (error) {
-    showToast('Failed to clear database', 'error')
-  } finally {
-    dbLoading.value = false
-  }
-}
-
-async function prefillDatabase() {
-  dbLoading.value = true
-  try {
-    const result = await $fetch('/api/database', { method: 'POST', body: { action: 'prefill' } })
-    if (result.success) {
-      showToast('Database prefilled with mock data successfully!', 'success')
-      window.location.reload()
-    } else {
-      showToast('Failed to prefill database', 'error')
-    }
-  } catch (error) {
-    showToast('Failed to prefill database', 'error')
-  } finally {
-    dbLoading.value = false
-  }
 }
 </script>
 
