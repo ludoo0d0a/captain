@@ -93,7 +93,7 @@
 
           <!-- Timeline for all versions -->
           <div v-if="viewMode !== 'table'" class="overflow-x-auto py-4">
-            <div class="flex items-end space-x-8 min-w-max">
+            <div class="flex items-start min-w-max space-x-8">
               <div v-for="version in getAppVersions(app.id)" :key="version.id" class="flex flex-col items-center">
                 <!-- Timeline node -->
                 <div class="relative flex flex-col items-center min-w-0">
@@ -106,13 +106,17 @@
                   </div>
                   <div v-else class="mt-2 text-xs text-gray-300">—</div>
                   <!-- Features for this version -->
-                  <div v-if="version.features && version.features.length" class="mt-2 w-40">
-                    <div v-for="feature in version.features" :key="feature.id" class="bg-blue-50 rounded px-2 py-1 mb-1 text-xs text-blue-800 flex items-center">
-                      <span class="font-semibold">{{ feature.name }}</span>
-                      <span v-if="feature.ticketNumber" class="ml-2 text-blue-400">({{ feature.ticketNumber }})</span>
-                    </div>
+                  <div class="mt-2 w-40" style="height: 96px; overflow-y: auto; display: flex; flex-direction: column; align-items: stretch;">
+                    <template v-if="version.features && version.features.length">
+                      <div v-for="feature in version.features" :key="feature.id" class="bg-blue-50 rounded px-2 py-1 mb-1 text-xs text-blue-800 flex items-center">
+                        <span class="font-semibold">{{ feature.name }}</span>
+                        <span v-if="feature.ticketNumber" class="ml-2 text-blue-400">({{ feature.ticketNumber }})</span>
+                      </div>
+                    </template>
+                    <template v-else>
+                      <div class="text-xs text-gray-300">No features</div>
+                    </template>
                   </div>
-                  <div v-else class="mt-2 text-xs text-gray-300">No features</div>
                 </div>
                 <!-- Timeline connector -->
                 <div v-if="!$last" class="h-1 w-16 bg-gray-300 mt-2"></div>
