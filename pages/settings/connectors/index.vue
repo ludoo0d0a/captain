@@ -1,59 +1,212 @@
 <template>
-  <div class="max-w-3xl mx-auto py-10">
-    <h1 class="text-3xl font-bold mb-4">Settings</h1>
-    <p class="text-gray-600 mb-8">Manage your application, connector, and system settings from here.</p>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-      <NuxtLink to="/settings/network" class="block bg-white rounded shadow p-6 hover:shadow-md transition">
-        <div class="flex items-center mb-2">
-          <Icon name="heroicons:server" class="w-6 h-6 mr-2 text-blue-500" />
-          <span class="font-semibold text-lg">Network</span>
+  <div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <!-- Header -->
+      <div class="px-4 py-6 sm:px-0">
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900">Connectors</h1>
+            <p class="mt-2 text-sm text-gray-600">
+              Manage your third-party integrations for applications, environments, and deployments.
+            </p>
+          </div>
+          <button
+            @click="$router.push('/connectors/new')"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <PlusIcon class="h-4 w-4 mr-2" />
+            Add Connector
+          </button>
         </div>
-        <p class="text-sm text-gray-500">Configure global network and proxy settings for all connectors.</p>
-      </NuxtLink>
-      <NuxtLink to="/connectors" class="block bg-white rounded shadow p-6 hover:shadow-md transition">
-        <div class="flex items-center mb-2">
-          <Icon name="heroicons:link" class="w-6 h-6 mr-2 text-green-500" />
-          <span class="font-semibold text-lg">Connectors</span>
+      </div>
+
+      <!-- Connectors Grid -->
+      <div class="px-4 sm:px-0">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div
+            v-for="connector in connectors"
+            :key="connector.name"
+            class="bg-white overflow-hidden shadow rounded-lg"
+          >
+            <div class="p-6">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0">
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                      <component :is="getConnectorIcon(connector.type)" class="h-5 w-5 text-indigo-600" />
+                    </div>
+                  </div>
+                  <div class="ml-4">
+                    <h3 class="text-lg font-medium text-gray-900">{{ connector.name }}</h3>
+                    <p class="text-sm text-gray-500">{{ getConnectorTypeLabel(connector.type) }}</p>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <span
+                    :class="[
+                      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                      connector.connected
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    ]"
+                  >
+                    {{ connector.connected ? 'Connected' : 'Disconnected' }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="mt-4">
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-500">Last sync:</span>
+                  <span class="text-gray-900">{{ formatDate(connector.lastSync) }}</span>
+                </div>
+              </div>
+
+              <div class="mt-6 flex space-x-3">
+                <button
+                  @click="testConnection(connector.name)"
+                  class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Test
+                </button>
+                <button
+                  @click="$router.push(`/connectors/${connector.name}/edit`)"
+                  class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Edit
+                </button>
+                <button
+                  @click="deleteConnector(connector.name)"
+                  class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <p class="text-sm text-gray-500">Manage, add, and configure third-party connectors and integrations.</p>
-      </NuxtLink>
-      <NuxtLink to="/settings/database" class="block bg-white rounded shadow p-6 hover:shadow-md transition">
-        <div class="flex items-center mb-2">
-          <Icon name="heroicons:database" class="w-6 h-6 mr-2 text-purple-500" />
-          <span class="font-semibold text-lg">Database</span>
+
+        <!-- Empty State -->
+        <div v-if="connectors.length === 0" class="text-center py-12">
+          <div class="mx-auto h-12 w-12 text-gray-400">
+            <LinkIcon class="h-12 w-12" />
+          </div>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">No connectors</h3>
+          <p class="mt-1 text-sm text-gray-500">
+            Get started by adding your first connector to integrate with external services.
+          </p>
+          <div class="mt-6">
+            <button
+              @click="$router.push('/connectors/new')"
+              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <PlusIcon class="h-4 w-4 mr-2" />
+              Add Connector
+            </button>
+          </div>
         </div>
-        <p class="text-sm text-gray-500">Manage database settings and perform maintenance tasks.</p>
-      </NuxtLink>
-    </div>
-    <div>
-      <h2 class="text-xl font-semibold mb-4">Connector Settings</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <NuxtLink
-          v-for="connector in connectorTypes"
-          :key="connector.id"
-          :to="`/settings/connectors/${connector.id}`"
-          class="block bg-white rounded shadow p-4 hover:shadow-md transition flex items-center"
-        >
-          <Icon :name="connector.icon" class="w-5 h-5 mr-2" />
-          <span class="font-medium">{{ connector.label }}</span>
-        </NuxtLink>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-const connectorTypes = [
-  { id: 'github', label: 'GitHub', icon: 'heroicons:code-bracket' },
-  { id: 'gitlab', label: 'GitLab', icon: 'heroicons:command-line' },
-  { id: 'docker', label: 'Docker', icon: 'heroicons:cube' },
-  { id: 'kubernetes', label: 'Kubernetes', icon: 'heroicons:cog-6-tooth' },
-  { id: 'githubactions', label: 'GitHub Actions', icon: 'heroicons:play' },
-  { id: 'http', label: 'HTTP API', icon: 'heroicons:globe-alt' },
-  { id: 'jenkins', label: 'Jenkins', icon: 'heroicons:wrench-screwdriver' },
-  { id: 'ssh', label: 'SSH', icon: 'heroicons:computer-desktop' },
-  { id: 'xldeploy', label: 'XL Deploy', icon: 'heroicons:server' },
-  { id: 'googleplaystore', label: 'Google Play Store', icon: 'heroicons:device-phone-mobile' },
-  { id: 'jira', label: 'Jira', icon: 'heroicons:clipboard-document-list' }
-]
+import { ref, onMounted } from 'vue'
+import { PlusIcon, LinkIcon } from '@heroicons/vue/24/outline'
+
+// Connector icons
+import {
+  CodeBracketIcon, // GitHub
+  CommandLineIcon, // GitLab
+  CubeIcon, // Docker
+  CogIcon, // Kubernetes
+  PlayIcon, // GitHub Actions
+  GlobeAltIcon, // HTTP
+  WrenchScrewdriverIcon, // Jenkins
+  ComputerDesktopIcon, // SSH
+  ServerIcon, // XL Deploy
+  DevicePhoneMobileIcon // Google Play Store
+} from '@heroicons/vue/24/outline'
+
+interface Connector {
+  name: string
+  type: string
+  connected: boolean
+  lastSync: string
+  settings?: Record<string, any>
+  credentials?: Record<string, any>
+}
+
+const connectors = ref<Connector[]>([])
+
+const connectorTypes = {
+  github: { label: 'GitHub', icon: CodeBracketIcon },
+  gitlab: { label: 'GitLab', icon: CommandLineIcon },
+  docker: { label: 'Docker', icon: CubeIcon },
+  kubernetes: { label: 'Kubernetes', icon: CogIcon },
+  githubactions: { label: 'GitHub Actions', icon: PlayIcon },
+  http: { label: 'HTTP API', icon: GlobeAltIcon },
+  jenkins: { label: 'Jenkins', icon: WrenchScrewdriverIcon },
+  ssh: { label: 'SSH', icon: ComputerDesktopIcon },
+  xldeploy: { label: 'XL Deploy', icon: ServerIcon },
+  googleplaystore: { label: 'Google Play Store', icon: DevicePhoneMobileIcon }
+}
+
+onMounted(async () => {
+  await loadConnectors()
+})
+
+async function loadConnectors() {
+  try {
+    const response = await $fetch('/api/connectors')
+    connectors.value = response.connectors || []
+  } catch (error) {
+    console.error('Failed to load connectors:', error)
+  }
+}
+
+function getConnectorIcon(type: string) {
+  return connectorTypes[type as keyof typeof connectorTypes]?.icon || LinkIcon
+}
+
+function getConnectorTypeLabel(type: string) {
+  return connectorTypes[type as keyof typeof connectorTypes]?.label || type
+}
+
+function formatDate(dateString: string) {
+  if (!dateString) return 'Never'
+  return new Date(dateString).toLocaleDateString()
+}
+
+async function testConnection(connectorName: string) {
+  try {
+    const response = await $fetch(`/api/connectors/${connectorName}/test`, {
+      method: 'POST'
+    })
+    
+    if (response.success) {
+      // Update connector status
+      const connector = connectors.value.find(c => c.name === connectorName)
+      if (connector) {
+        connector.connected = true
+        connector.lastSync = new Date().toISOString()
+      }
+    }
+  } catch (error) {
+    console.error('Connection test failed:', error)
+  }
+}
+
+async function deleteConnector(connectorName: string) {
+  if (!confirm('Are you sure you want to delete this connector?')) return
+
+  try {
+    await $fetch(`/api/connectors/${connectorName}`, {
+      method: 'DELETE'
+    })
+    await loadConnectors()
+  } catch (error) {
+    console.error('Failed to delete connector:', error)
+  }
+}
 </script> 

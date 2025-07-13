@@ -174,7 +174,7 @@ watch(() => props.connectorId, (newId) => {
 
 async function loadSettings() {
   try {
-    const response = await $fetch(`/api/settings?scope=connector:${props.connectorId}`)
+    const response = await $fetch(`/api/settings?connectorId=${props.connectorId}`)
     if (response && response.success && response.settings) {
       // Merge loaded settings with defaults
       Object.assign(settings.value, response.settings)
@@ -195,7 +195,6 @@ async function saveSettings() {
       await $fetch('/api/settings', {
         method: 'POST',
         body: {
-          scope: `connector:${props.connectorId}`,
           key: field.name,
           value: settings.value[field.name],
           connectorId: props.connectorId

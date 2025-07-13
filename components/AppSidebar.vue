@@ -46,12 +46,12 @@
       <!-- Settings Menu -->
       <div v-else>
         <!-- Back to Main Menu -->
-        <button 
-          class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 font-semibold mb-2" 
-          @click="switchToMain"
+        <NuxtLink 
+          to="/"
+          class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 font-semibold mb-2 flex items-center"
         >
           <Icon name="heroicons:arrow-left" class="w-4 h-4 mr-2" /> Back to Dashboard
-        </button>
+        </NuxtLink>
         <!-- Connector Settings -->
         <div class="mb-4">
           <h3 class="text-sm font-semibold text-gray-600 mb-2 px-2">Connector Settings</h3>

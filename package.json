@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
     "deploy": "npx nuxthub deploy",
+    "migrate": "dont work npx tsx server/init.ts",
     "model": "npx -y @mermaid-js/mermaid-cli -i doc/db/erd.mmd -o doc/db/er_diagram.png"
   },
   "devDependencies": {
