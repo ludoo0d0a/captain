@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy to Nuxhub
 
 on:
   push:
@@ -34,5 +34,5 @@ jobs:
       - name: Build
         run: pnpm run generate
       
-      #  - name: Deploy to nuxthub
-      #    run: pnpm run deploy
+       - name: Deploy to nuxthub
+         run: pnpm run deploy
