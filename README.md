@@ -6,7 +6,9 @@
 
 A modern Nuxt 3 dashboard to manage releases, status, and deployed versions of multiple applications across environments—similar to Cloudfresh, but open and extensible.
 
-[**Live Preview**](https://ludoo0d0a.github.io/captain/)
+[**Live Preview**](https://captain.nuxt.dev/ )
+
+[**Landing page**](https://ludoo0d0a.github.io/captain/)
 
 ---
 
