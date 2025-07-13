@@ -39,6 +39,28 @@
           placeholder="Filter by application name or tags..."
           class="w-full max-w-xl"
         />
+        <div class="ml-4">
+          <div class="inline-flex rounded-md shadow-sm border border-gray-200 bg-white" role="group">
+            <template v-for="mode in viewModes" :key="mode">
+              <button
+                @click="setViewMode(mode as 'full' | 'timeline' | 'table')"
+                :aria-label="viewModeAriaLabel(mode as 'full' | 'timeline' | 'table')"
+                :class="[
+                  'px-2 py-1 focus:outline-none',
+                  'border-r last:border-r-0',
+                  'transition-colors',
+                  viewMode === mode
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-white text-gray-400 hover:bg-gray-100',
+                  'first:rounded-l-md last:rounded-r-md'
+                ]"
+                type="button"
+              >
+                <component :is="viewModeIconMap[mode as 'full' | 'timeline' | 'table']" class="w-5 h-5" />
+              </button>
+            </template>
+          </div>
+        </div>
       </div>
 
       <div class="space-y-6">
@@ -70,7 +92,7 @@
           </div>
 
           <!-- Timeline for all versions -->
-          <div class="overflow-x-auto py-4">
+          <div v-if="viewMode !== 'table'" class="overflow-x-auto py-4">
             <div class="flex items-end space-x-8 min-w-max">
               <div v-for="version in getAppVersions(app.id)" :key="version.id" class="flex flex-col items-center">
                 <!-- Timeline node -->
@@ -98,7 +120,7 @@
             </div>
           </div>
 
-          <table class="w-full text-sm mt-2">
+          <table v-if="viewMode !== 'timeline'" class="w-full text-sm mt-2">
             <thead>
               <tr>
                 <th class="text-left px-2 py-1 font-semibold">Environment</th>
@@ -156,10 +178,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, inject, computed, onMounted } from 'vue'
+import { ref, inject, computed, onMounted, watch } from 'vue'
 import { useConnectorsStore } from '~/stores/connectors'
 import TagBadge from '~/components/TagBadge.vue'
 import QuickFilter from '~/components/QuickFilter.vue'
+import { ClockIcon, TableCellsIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 
 interface AggregatedApplication {
   id: string;
@@ -199,7 +222,25 @@ const selectedTags = ref<string[]>([])
 const allVersions = ref<any[]>([])
 const allFeatures = ref<any[]>([])
 
-// Load aggregated view data
+// View mode state: 'full', 'timeline', 'table'
+const viewMode = ref<'full' | 'timeline' | 'table'>('full')
+const viewModes: Array<'full' | 'timeline' | 'table'> = ['timeline', 'table', 'full']
+const viewModeIconMap: Record<'timeline' | 'table' | 'full', any> = {
+  timeline: ClockIcon,
+  table: TableCellsIcon,
+  full: Squares2X2Icon
+}
+function setViewMode(mode: 'full' | 'timeline' | 'table') {
+  viewMode.value = mode
+  localStorage.setItem('dashboard_viewMode', mode)
+}
+function viewModeAriaLabel(mode: 'full' | 'timeline' | 'table') {
+  if (mode === 'full') return 'Timeline and Table'
+  if (mode === 'timeline') return 'Timeline Only'
+  return 'Table Only'
+}
+
+// Load persistent state from localStorage
 async function loadApplicationsView() {
   loading.value = true
   try {
@@ -220,7 +261,13 @@ async function loadApplicationsView() {
 }
 
 onMounted(() => {
+  const modePref = localStorage.getItem('dashboard_viewMode')
+  if (modePref === 'timeline' || modePref === 'table' || modePref === 'full') viewMode.value = modePref
   loadApplicationsView()
+})
+
+watch(viewMode, val => {
+  localStorage.setItem('dashboard_viewMode', val)
 })
 
 async function refreshAll() {
@@ -322,10 +369,10 @@ function getPromotable(app: AggregatedApplication, envId: string) {
   return []
 }
 
-function getAllEnvironments() {
+function getAllEnvironments(): { id: string; name: string; tags: string[] }[] {
   const allEnvs: { id: string; name: string; tags: string[] }[] = [];
   applications.value.forEach(app => {
-    app.environments.forEach(env => {
+    app.environments.forEach((env: { id: string; name: string; tags: string[] }) => {
       if (!allEnvs.some(e => e.id === env.id)) {
         allEnvs.push(env);
       }
@@ -340,11 +387,10 @@ function getAppVersions(appId: string) {
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
 }
 
-function getVersionEnvironments(app: any, versionId: string) {
-  // Find all environments where this version is deployed for this app
+function getVersionEnvironments(app: any, versionId: string): { id: string; name: string; tags: string[] }[] {
   return (app.environments || [])
-    .filter(env => env.deployment && env.deployment.version && env.deployment.version.id === versionId)
-    .map(env => env)
+    .filter((env: { deployment?: { version?: { id: string } } }) => env.deployment && env.deployment.version && env.deployment.version.id === versionId)
+    .map((env: { id: string; name: string; tags: string[] }) => env)
 }
 
 function getAppFeatures(appId: string) {
