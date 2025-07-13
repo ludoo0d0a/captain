@@ -94,10 +94,9 @@
           <!-- Timeline for all versions -->
           <div v-if="viewMode !== 'table'" class="overflow-x-auto py-4">
             <div class="flex items-start min-w-max space-x-8">
-              <div v-for="version in getAppVersions(app.id)" :key="version.id" class="flex flex-col items-center">
-                <!-- Timeline node -->
-                <div class="relative flex flex-col items-center min-w-0">
-                  <div class="min-w-0 px-2 py-1 rounded-full flex items-center justify-center font-mono text-xs font-bold border-2 bg-white break-words text-center"
+              <div v-for="(version, idx) in getAppVersions(app.id)" :key="version.id" class="flex flex-row items-center">
+                <div class="flex flex-col items-center" :class="idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'" style="border-radius: 0.5rem; padding: 0.5rem 0.5rem 0.5rem 0.5rem;">
+                  <div class="min-w-0 px-2 py-1 rounded-full flex items-center justify-center font-mono text-xs font-bold border-2 break-words text-center"
                     :class="version.isSnapshot ? 'bg-yellow-100 border-yellow-400 text-yellow-800' : 'bg-green-100 border-green-400 text-green-800'">
                     <span class="break-words whitespace-pre-line text-center block">{{ version.name }}</span>
                   </div>
@@ -118,8 +117,8 @@
                     </template>
                   </div>
                 </div>
-                <!-- Timeline connector -->
-                <div v-if="!$last" class="h-1 w-16 bg-gray-300 mt-2"></div>
+                <!-- ChevronRight between nodes except after last -->
+                <ChevronRightIcon v-if="idx < getAppVersions(app.id).length - 1" class="w-6 h-6 text-gray-300 mx-2" />
               </div>
             </div>
           </div>
@@ -193,7 +192,7 @@ import { ref, inject, computed, onMounted, watch } from 'vue'
 import { useConnectorsStore } from '~/stores/connectors'
 import TagBadge from '~/components/TagBadge.vue'
 import QuickFilter from '~/components/QuickFilter.vue'
-import { ClockIcon, TableCellsIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
+import { ClockIcon, TableCellsIcon, Squares2X2Icon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 
 interface AggregatedApplication {
   id: string;
