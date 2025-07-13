@@ -96,10 +96,10 @@
             <div class="flex items-end space-x-8 min-w-max">
               <div v-for="version in getAppVersions(app.id)" :key="version.id" class="flex flex-col items-center">
                 <!-- Timeline node -->
-                <div class="relative flex flex-col items-center">
-                  <div class="w-8 h-8 rounded-full flex items-center justify-center font-mono text-xs font-bold border-2"
+                <div class="relative flex flex-col items-center min-w-0">
+                  <div class="min-w-0 px-2 py-1 rounded-full flex items-center justify-center font-mono text-xs font-bold border-2 bg-white break-words text-center"
                     :class="version.isSnapshot ? 'bg-yellow-100 border-yellow-400 text-yellow-800' : 'bg-green-100 border-green-400 text-green-800'">
-                    {{ version.name }}
+                    <span class="break-words whitespace-pre-line text-center block">{{ version.name }}</span>
                   </div>
                   <div v-if="getVersionEnvironments(app, version.id).length" class="mt-2 flex flex-wrap gap-1">
                     <TagBadge v-for="env in getVersionEnvironments(app, version.id)" :key="env.id" :tag="env.name" />
