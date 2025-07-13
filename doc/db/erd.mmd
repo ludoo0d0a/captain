@@ -52,6 +52,8 @@ erDiagram
     scope TEXT
     key TEXT
     value TEXT
+    connectorId TEXT
+    "UNIQUE(scope, key, connectorId)"
   }
   
   versions }o--|| applications : "appId"

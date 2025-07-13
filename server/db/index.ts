@@ -121,7 +121,8 @@ export async function createTables() {
       scope TEXT NOT NULL,
       key TEXT NOT NULL,
       value TEXT,
-      UNIQUE(scope, key)
+      connectorId TEXT,
+      UNIQUE(scope, key, connectorId)
     )
   `);
 }

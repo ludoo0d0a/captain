@@ -175,9 +175,11 @@ watch(() => props.connectorId, (newId) => {
 async function loadSettings() {
   try {
     const response = await $fetch(`/api/settings?scope=connector:${props.connectorId}`)
-    if (response.success && response.settings) {
+    if (response && response.success && response.settings) {
       // Merge loaded settings with defaults
       Object.assign(settings.value, response.settings)
+    } else if (response && response.error) {
+      showToast && showToast('Failed to load settings: ' + response.error, 'error')
     }
   } catch (error) {
     console.error('Failed to load settings:', error)
@@ -195,11 +197,11 @@ async function saveSettings() {
         body: {
           scope: `connector:${props.connectorId}`,
           key: field.name,
-          value: settings.value[field.name]
+          value: settings.value[field.name],
+          connectorId: props.connectorId
         }
       })
     }
-    
     showToast && showToast('Settings saved successfully!', 'success')
     emit('saved')
   } catch (error) {
@@ -219,10 +221,10 @@ async function testConnection() {
         method: 'POST',
         body: { baseUrl, email, apiToken }
       })
-      if (result.success) {
+      if (result && result.success) {
         showToast && showToast(result.message || 'Jira connection successful!', 'success')
       } else {
-        showToast && showToast(result.message || 'Jira connection failed', 'error')
+        showToast && showToast((result && result.message) || 'Jira connection failed', 'error')
       }
     } else {
       // This would call the connector's test method
@@ -231,7 +233,6 @@ async function testConnection() {
       showToast && showToast('Connection test successful!', 'success')
     }
   } catch (error) {
-    console.error('Connection test failed:', error)
     showToast && showToast('Connection test failed', 'error')
   } finally {
     testing.value = false

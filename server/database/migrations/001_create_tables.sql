@@ -36,4 +36,13 @@ CREATE TABLE IF NOT EXISTS feature_versions (
   PRIMARY KEY (featureId, versionId),
   FOREIGN KEY (featureId) REFERENCES features (id) ON DELETE CASCADE,
   FOREIGN KEY (versionId) REFERENCES versions (id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS settings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  scope TEXT NOT NULL,
+  key TEXT NOT NULL,
+  value TEXT,
+  connectorId TEXT,
+  UNIQUE(scope, key, connectorId)
 ); 
