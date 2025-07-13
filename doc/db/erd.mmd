@@ -1,0 +1,62 @@
+erDiagram
+  applications {
+    id TEXT PK
+    name TEXT
+    tags TEXT
+  }
+  environments {
+    id TEXT PK
+    name TEXT
+    tags TEXT
+  }
+  versions {
+    id TEXT PK
+    appId TEXT FK
+    name TEXT
+    createdAt TEXT
+    isSnapshot INTEGER
+    metadata TEXT
+  }
+  deployments {
+    id TEXT PK
+    appId TEXT FK
+    envId TEXT FK
+    versionId TEXT FK
+    status TEXT
+    deployedAt TEXT
+  }
+  features {
+    id TEXT PK
+    name TEXT
+    ticketNumber TEXT
+    link TEXT
+    createdAt TEXT
+    updatedAt TEXT
+  }
+  feature_applications {
+    featureId TEXT FK
+    applicationId TEXT FK
+  }
+  connectors {
+    id TEXT PK
+    name TEXT
+    type TEXT
+    settings TEXT
+    credentials TEXT
+    status TEXT
+    createdAt TEXT
+    updatedAt TEXT
+  }
+  settings {
+    id INTEGER PK
+    scope TEXT
+    key TEXT
+    value TEXT
+  }
+  
+  versions }o--|| applications : "appId"
+  deployments }o--|| applications : "appId"
+  deployments }o--|| environments : "envId"
+  deployments }o--|| versions : "versionId"
+  feature_applications }o--|| features : "featureId"
+  feature_applications }o--|| applications : "applicationId" 
