@@ -93,12 +93,12 @@ export async function createTables() {
   `);
 
   await database.execute(`
-    CREATE TABLE IF NOT EXISTS feature_applications (
+    CREATE TABLE IF NOT EXISTS feature_versions (
       featureId TEXT NOT NULL,
-      applicationId TEXT NOT NULL,
-      PRIMARY KEY (featureId, applicationId),
+      versionId TEXT NOT NULL,
+      PRIMARY KEY (featureId, versionId),
       FOREIGN KEY (featureId) REFERENCES features (id) ON DELETE CASCADE,
-      FOREIGN KEY (applicationId) REFERENCES applications (id) ON DELETE CASCADE
+      FOREIGN KEY (versionId) REFERENCES versions (id) ON DELETE CASCADE
     )
   `);
 
@@ -133,7 +133,7 @@ export async function clearDatabase() {
   await database.execute('DELETE FROM versions');
   await database.execute('DELETE FROM environments');
   await database.execute('DELETE FROM applications');
-  await database.execute('DELETE FROM feature_applications');
+  await database.execute('DELETE FROM feature_versions');
   await database.execute('DELETE FROM features');
   await database.execute('DELETE FROM connectors');
 }
@@ -196,18 +196,18 @@ export async function prefillWithMockData() {
     { id: 'feature-6', name: 'API Rate Limiting', ticketNumber: 'API-006', link: 'https://jira.company.com/browse/API-006' }
   ];
   
-  // Mock feature-application relationships
-  const mockFeatureApps = [
-    { featureId: 'feature-1', applicationId: 'app-1' },
-    { featureId: 'feature-1', applicationId: 'app-2' },
-    { featureId: 'feature-2', applicationId: 'app-2' },
-    { featureId: 'feature-2', applicationId: 'app-5' },
-    { featureId: 'feature-3', applicationId: 'app-1' },
-    { featureId: 'feature-3', applicationId: 'app-3' },
-    { featureId: 'feature-4', applicationId: 'app-4' },
-    { featureId: 'feature-5', applicationId: 'app-3' },
-    { featureId: 'feature-6', applicationId: 'app-2' },
-    { featureId: 'feature-6', applicationId: 'app-5' }
+  // Mock feature-version relationships
+  const mockFeatureVersions = [
+    { featureId: 'feature-1', versionId: 'ver-1' },
+    { featureId: 'feature-1', versionId: 'ver-2' },
+    { featureId: 'feature-2', versionId: 'ver-3' },
+    { featureId: 'feature-2', versionId: 'ver-5' },
+    { featureId: 'feature-3', versionId: 'ver-1' },
+    { featureId: 'feature-3', versionId: 'ver-6' },
+    { featureId: 'feature-4', versionId: 'ver-7' },
+    { featureId: 'feature-5', versionId: 'ver-8' },
+    { featureId: 'feature-6', versionId: 'ver-3' },
+    { featureId: 'feature-6', versionId: 'ver-5' }
   ];
   
   // Insert mock data
@@ -234,9 +234,10 @@ export async function prefillWithMockData() {
       [feature.id, feature.name, feature.ticketNumber, feature.link]);
   }
 
-  for (const featureApp of mockFeatureApps) {
-    await database.execute('INSERT INTO feature_applications (featureId, applicationId) VALUES (?, ?)', 
-      [featureApp.featureId, featureApp.applicationId]);
+  // Insert mock feature-version relationships
+  for (const featureVersion of mockFeatureVersions) {
+    await database.execute('INSERT INTO feature_versions (featureId, versionId) VALUES (?, ?)', 
+      [featureVersion.featureId, featureVersion.versionId]);
   }
 }
 

@@ -91,40 +91,37 @@
               </div>
             </div>
 
-            <!-- Associated Applications -->
+            <!-- Associated Versions -->
             <div>
-              <h3 class="text-lg font-medium text-gray-900 mb-4">Associated Applications</h3>
-              <div v-if="applications.length === 0" class="text-center text-gray-500 py-4">
-                No applications available. Please create applications first.
+              <h3 class="text-lg font-medium text-gray-900 mb-4">Associated Versions</h3>
+              <div v-if="versions.length === 0" class="text-center text-gray-500 py-4">
+                No versions available. Please create versions first.
               </div>
               <div v-else class="space-y-3">
                 <div class="text-sm text-gray-600 mb-3">
-                  Select the applications that this feature affects or is implemented in:
+                  Select the versions that this feature is implemented in:
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div 
-                    v-for="app in applications" 
-                    :key="app.id"
+                    v-for="ver in versions" 
+                    :key="ver.id"
                     class="flex items-center p-3 border rounded-lg cursor-pointer transition-colors"
                     :class="[
-                      form.applicationIds.includes(app.id)
+                      form.versionIds.includes(ver.id)
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-200 hover:border-gray-300'
                     ]"
-                    @click="toggleApplication(app.id)"
+                    @click="toggleVersion(ver.id)"
                   >
                     <input
                       type="checkbox"
-                      :checked="form.applicationIds.includes(app.id)"
-                      @change="toggleApplication(app.id)"
+                      :checked="form.versionIds.includes(ver.id)"
+                      @change="toggleVersion(ver.id)"
                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-3"
                     />
                     <div class="flex-1">
-                      <div class="font-medium text-gray-900">{{ app.name }}</div>
-                      <div class="flex flex-wrap gap-1 mt-1">
-                        <TagBadge v-for="tag in app.tags" :key="tag" :tag="tag" class="text-xs" />
-                        <span v-if="!app.tags || app.tags.length === 0" class="text-xs text-gray-400">No tags</span>
-                      </div>
+                      <div class="font-medium text-gray-900">{{ ver.name }}</div>
+                      <div class="text-xs text-gray-500 mt-1">App: {{ getAppName(ver.appId) }}</div>
                     </div>
                   </div>
                 </div>
@@ -132,28 +129,26 @@
             </div>
 
             <!-- Current Associations -->
-            <div v-if="feature.applications && feature.applications.length > 0">
+            <div v-if="feature.versions && feature.versions.length > 0">
               <h3 class="text-lg font-medium text-gray-900 mb-4">Current Associations</h3>
               <div class="bg-gray-50 rounded-lg p-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div 
-                    v-for="app in feature.applications" 
-                    :key="app.id"
+                    v-for="ver in feature.versions" 
+                    :key="ver.id"
                     class="flex items-center justify-between p-3 bg-white rounded border"
                   >
                     <div class="flex items-center space-x-3">
                       <div>
-                        <div class="font-medium text-gray-900">{{ app.name }}</div>
-                        <div class="flex flex-wrap gap-1 mt-1">
-                          <TagBadge v-for="tag in app.tags" :key="tag" :tag="tag" class="text-xs" />
-                        </div>
+                        <div class="font-medium text-gray-900">{{ ver.name }}</div>
+                        <div class="text-xs text-gray-500 mt-1">App: {{ getAppName(ver.appId) }}</div>
                       </div>
                     </div>
                     <NuxtLink 
-                      :to="`/applications/${app.id}`"
+                      :to="`/versions/${ver.id}`"
                       class="text-blue-600 hover:text-blue-800 text-sm"
                     >
-                      View App
+                      View Ver
                     </NuxtLink>
                   </div>
                 </div>
@@ -205,18 +200,20 @@ const loading = ref(false)
 const saving = ref(false)
 
 const feature = ref<any>(null)
+const versions = ref<any[]>([])
 const applications = ref<any[]>([])
 
 const form = ref({
   name: '',
   ticketNumber: '',
   link: '',
-  applicationIds: [] as string[]
+  versionIds: [] as string[]
 })
 
 onMounted(() => {
-  console.log('🚀 Edit feature page mounted for feature:', featureId)
   loadData()
+  loadVersions()
+  loadApplications()
 })
 
 async function loadData() {
@@ -239,12 +236,16 @@ async function loadData() {
       tags: app.tags ? JSON.parse(app.tags) : []
     }))
 
+    // Load versions
+    const vers = await $fetch('/api/versions')
+    versions.value = vers
+
     // Populate form
     form.value = {
       name: feature.value.name,
       ticketNumber: feature.value.ticketNumber || '',
       link: feature.value.link || '',
-      applicationIds: feature.value.applications?.map((app: any) => app.id) || []
+      versionIds: feature.value.versions?.map((ver: any) => ver.id) || []
     }
   } catch (error) {
     console.error('Failed to load data:', error)
@@ -254,13 +255,42 @@ async function loadData() {
   }
 }
 
-function toggleApplication(appId: string) {
-  const index = form.value.applicationIds.indexOf(appId)
-  if (index > -1) {
-    form.value.applicationIds.splice(index, 1)
-  } else {
-    form.value.applicationIds.push(appId)
+async function loadVersions() {
+  try {
+    const vers = await $fetch('/api/versions')
+    versions.value = vers
+  } catch (error) {
+    console.error('Failed to load versions:', error)
+    showToast('Failed to load versions', 'error')
   }
+}
+
+async function loadApplications() {
+  try {
+    const apps = await $fetch('/api/applications')
+    applications.value = Array.isArray(apps)
+      ? apps.map((app: any) => ({ ...app, tags: app.tags ? JSON.parse(app.tags) : [] }))
+      : []
+  } catch (error) {
+    console.error('Failed to load applications:', error)
+    showToast('Failed to load applications', 'error')
+    applications.value = []
+  }
+}
+
+function toggleVersion(verId: string) {
+  const index = form.value.versionIds.indexOf(verId)
+  if (index > -1) {
+    form.value.versionIds.splice(index, 1)
+  } else {
+    form.value.versionIds.push(verId)
+  }
+}
+
+function getAppName(appId: string) {
+  if (!applications.value || !Array.isArray(applications.value)) return appId
+  const app = applications.value.find((a: any) => a.id === appId)
+  return app ? app.name : appId
 }
 
 async function saveFeature() {

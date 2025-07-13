@@ -10,7 +10,8 @@
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
-    "deploy": "npx nuxthub deploy"
+    "deploy": "npx nuxthub deploy",
+    "model": "npx -y @mermaid-js/mermaid-cli -i doc/db/erd.mmd -o doc/db/er_diagram.png"
   },
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.2",

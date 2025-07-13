@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
 
   if (event.method === 'GET') {
     try {
-      // Get all features with their associated applications
+      // Get all features with their associated versions
       const features = await database.query(`
         SELECT 
           f.id,
@@ -15,37 +15,32 @@ export default defineEventHandler(async (event) => {
           f.link,
           f.createdAt,
           f.updatedAt,
-          GROUP_CONCAT(fa.applicationId) as applicationIds
+          GROUP_CONCAT(fv.versionId) as versionIds
         FROM features f
-        LEFT JOIN feature_applications fa ON f.id = fa.featureId
+        LEFT JOIN feature_versions fv ON f.id = fv.featureId
         GROUP BY f.id
         ORDER BY f.createdAt DESC
       `);
 
-      // Parse application IDs and fetch application details
-      const featuresWithApps = await Promise.all(
+      // Parse version IDs and fetch version details
+      const featuresWithVersions = await Promise.all(
         features.map(async (feature: any) => {
-          let applications: any[] = [];
-          if (feature.applicationIds) {
-            const appIds = feature.applicationIds.split(',');
-            const apps = await database.query(
-              'SELECT id, name, tags FROM applications WHERE id IN (' + appIds.map(() => '?').join(',') + ')',
-              appIds
+          let versions: any[] = [];
+          if (feature.versionIds) {
+            const versionIds = feature.versionIds.split(',');
+            const vers = await database.query(
+              'SELECT id, name, appId, createdAt FROM versions WHERE id IN (' + versionIds.map(() => '?').join(',') + ')',
+              versionIds
             );
-            applications = apps.map((app: any) => ({
-              ...app,
-              tags: app.tags ? JSON.parse(app.tags) : []
-            }));
+            versions = vers;
           }
-          
           return {
             ...feature,
-            applications
+            versions
           };
         })
       );
-
-      return featuresWithApps;
+      return featuresWithVersions;
     } catch (error) {
       console.error('Error fetching features:', error);
       throw createError({
@@ -57,24 +52,21 @@ export default defineEventHandler(async (event) => {
 
   if (event.method === 'POST') {
     try {
-      const { id, name, ticketNumber, link, applicationIds } = await readBody(event);
-
+      const { id, name, ticketNumber, link, versionIds } = await readBody(event);
       // Insert feature
       await database.execute(
         'INSERT INTO features (id, name, ticketNumber, link) VALUES (?, ?, ?, ?)',
         [id, name, ticketNumber, link]
       );
-
-      // Insert feature-application relationships
-      if (applicationIds && applicationIds.length > 0) {
-        for (const appId of applicationIds) {
+      // Insert feature-version relationships
+      if (versionIds && versionIds.length > 0) {
+        for (const versionId of versionIds) {
           await database.execute(
-            'INSERT INTO feature_applications (featureId, applicationId) VALUES (?, ?)',
-            [id, appId]
+            'INSERT INTO feature_versions (featureId, versionId) VALUES (?, ?)',
+            [id, versionId]
           );
         }
       }
-
       return { success: true, id };
     } catch (error) {
       console.error('Error creating feature:', error);
@@ -87,27 +79,23 @@ export default defineEventHandler(async (event) => {
 
   if (event.method === 'PUT') {
     try {
-      const { id, name, ticketNumber, link, applicationIds } = await readBody(event);
-
+      const { id, name, ticketNumber, link, versionIds } = await readBody(event);
       // Update feature
       await database.execute(
         'UPDATE features SET name = ?, ticketNumber = ?, link = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
         [name, ticketNumber, link, id]
       );
-
       // Remove existing relationships
-      await database.execute('DELETE FROM feature_applications WHERE featureId = ?', [id]);
-
+      await database.execute('DELETE FROM feature_versions WHERE featureId = ?', [id]);
       // Insert new relationships
-      if (applicationIds && applicationIds.length > 0) {
-        for (const appId of applicationIds) {
+      if (versionIds && versionIds.length > 0) {
+        for (const versionId of versionIds) {
           await database.execute(
-            'INSERT INTO feature_applications (featureId, applicationId) VALUES (?, ?)',
-            [id, appId]
+            'INSERT INTO feature_versions (featureId, versionId) VALUES (?, ?)',
+            [id, versionId]
           );
         }
       }
-
       return { success: true };
     } catch (error) {
       console.error('Error updating feature:', error);

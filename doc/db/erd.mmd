@@ -33,9 +33,9 @@ erDiagram
     createdAt TEXT
     updatedAt TEXT
   }
-  feature_applications {
+  feature_versions {
     featureId TEXT FK
-    applicationId TEXT FK
+    versionId TEXT FK
   }
   connectors {
     id TEXT PK
@@ -58,5 +58,5 @@ erDiagram
   deployments }o--|| applications : "appId"
   deployments }o--|| environments : "envId"
   deployments }o--|| versions : "versionId"
-  feature_applications }o--|| features : "featureId"
-  feature_applications }o--|| applications : "applicationId" 
+  feature_versions }o--|| features : "featureId"
+  feature_versions }o--|| versions : "versionId" 

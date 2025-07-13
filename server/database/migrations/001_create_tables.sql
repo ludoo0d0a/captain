@@ -28,4 +28,12 @@ CREATE TABLE IF NOT EXISTS deployments (
   versionId TEXT NOT NULL,
   status TEXT,
   deployedAt TEXT
+);
+
+CREATE TABLE IF NOT EXISTS feature_versions (
+  featureId TEXT NOT NULL,
+  versionId TEXT NOT NULL,
+  PRIMARY KEY (featureId, versionId),
+  FOREIGN KEY (featureId) REFERENCES features (id) ON DELETE CASCADE,
+  FOREIGN KEY (versionId) REFERENCES versions (id) ON DELETE CASCADE
 ); 

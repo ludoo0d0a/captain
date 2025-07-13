@@ -102,31 +102,29 @@
               </div>
             </div>
 
-            <!-- Associated Applications -->
+            <!-- Associated Versions -->
             <div class="mb-4">
-              <h4 class="text-sm font-medium text-gray-700 mb-2">Associated Applications</h4>
-              <div v-if="feature.applications && feature.applications.length > 0" class="space-y-2">
+              <h4 class="text-sm font-medium text-gray-700 mb-2">Associated Versions</h4>
+              <div v-if="feature.versions && feature.versions.length > 0" class="space-y-2">
                 <div 
-                  v-for="app in feature.applications" 
-                  :key="app.id"
+                  v-for="ver in feature.versions" 
+                  :key="ver.id"
                   class="flex items-center justify-between p-2 bg-gray-50 rounded"
                 >
                   <div class="flex items-center space-x-2">
-                    <span class="text-sm font-medium text-gray-900">{{ app.name }}</span>
-                    <div class="flex space-x-1">
-                      <TagBadge v-for="tag in app.tags" :key="tag" :tag="tag" class="text-xs" />
-                    </div>
+                    <span class="text-sm font-medium text-gray-900">{{ ver.name }}</span>
+                    <span class="text-xs text-gray-500">(App: {{ getAppName(ver.appId) }})</span>
                   </div>
                   <NuxtLink 
-                    :to="`/applications/${app.id}`"
+                    :to="`/applications/${ver.appId}`"
                     class="text-blue-600 hover:text-blue-800 text-xs"
                   >
-                    View
+                    View App
                   </NuxtLink>
                 </div>
               </div>
               <div v-else class="text-sm text-gray-500 italic">
-                No applications associated
+                No versions associated
               </div>
             </div>
 
@@ -262,6 +260,11 @@ async function deleteFeature(featureId: string) {
 function formatDate(dateString: string) {
   if (!dateString) return 'Unknown'
   return new Date(dateString).toLocaleDateString()
+}
+
+function getAppName(appId: string) {
+  const app = applications.value.find((a: any) => a.id === appId)
+  return app ? app.name : appId
 }
 
 onMounted(() => {
