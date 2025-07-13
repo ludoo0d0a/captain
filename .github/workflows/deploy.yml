@@ -33,11 +33,6 @@ jobs:
 
       - name: Build
         run: pnpm run generate
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
-          publish_branch: gh-pages
-          cname: '' 
+      
+      #  - name: Deploy to nuxthub
+      #    run: pnpm run deploy
