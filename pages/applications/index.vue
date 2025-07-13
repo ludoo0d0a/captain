@@ -68,6 +68,36 @@
             <TagBadge v-for="tag in app.tags" :key="tag" :tag="tag" class="mr-1" />
             <span v-if="!app.tags || !app.tags.length" class="inline-block text-gray-300 text-xs">—</span>
           </div>
+
+          <!-- Timeline for all versions -->
+          <div class="overflow-x-auto py-4">
+            <div class="flex items-end space-x-8 min-w-max">
+              <div v-for="version in getAppVersions(app.id)" :key="version.id" class="flex flex-col items-center">
+                <!-- Timeline node -->
+                <div class="relative flex flex-col items-center">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center font-mono text-xs font-bold border-2"
+                    :class="version.isSnapshot ? 'bg-yellow-100 border-yellow-400 text-yellow-800' : 'bg-green-100 border-green-400 text-green-800'">
+                    {{ version.name }}
+                  </div>
+                  <div v-if="getVersionEnvironments(app, version.id).length" class="mt-2 flex flex-wrap gap-1">
+                    <TagBadge v-for="env in getVersionEnvironments(app, version.id)" :key="env.id" :tag="env.name" />
+                  </div>
+                  <div v-else class="mt-2 text-xs text-gray-300">—</div>
+                  <!-- Features for this app -->
+                  <div class="mt-2 w-40">
+                    <div v-for="feature in getAppFeatures(app.id)" :key="feature.id" class="bg-gray-50 rounded px-2 py-1 mb-1 text-xs text-gray-700 flex items-center">
+                      <span class="font-semibold">{{ feature.name }}</span>
+                      <span v-if="feature.ticketNumber" class="ml-2 text-gray-400">({{ feature.ticketNumber }})</span>
+                    </div>
+                    <div v-if="getAppFeatures(app.id).length === 0" class="text-xs text-gray-300">No features</div>
+                  </div>
+                </div>
+                <!-- Timeline connector -->
+                <div v-if="!$last" class="h-1 w-16 bg-gray-300 mt-2"></div>
+              </div>
+            </div>
+          </div>
+
           <table class="w-full text-sm mt-2">
             <thead>
               <tr>
@@ -165,12 +195,22 @@ const connectorInstances = computed(() => connectorsStore.connectorInstances.fil
 const filter = ref('')
 const selectedTags = ref<string[]>([])
 
+// New: versions and features
+const allVersions = ref<any[]>([])
+const allFeatures = ref<any[]>([])
+
 // Load aggregated view data
 async function loadApplicationsView() {
   loading.value = true
   try {
-    const data = await $fetch('/api/view?type=applications') as AggregatedApplication[]
-    applications.value = data
+    const [appsData, versionsData, featuresData] = await Promise.all([
+      $fetch('/api/view?type=applications') as Promise<AggregatedApplication[]>,
+      $fetch('/api/versions') as Promise<any[]>,
+      $fetch('/api/features') as Promise<any[]>
+    ])
+    applications.value = appsData
+    allVersions.value = versionsData
+    allFeatures.value = featuresData
   } catch (error) {
     console.error('Failed to load applications view:', error)
     showToast && showToast('Failed to load applications data', 'error')
@@ -292,5 +332,25 @@ function getAllEnvironments() {
     });
   });
   return allEnvs;
+}
+
+function getAppVersions(appId: string) {
+  return allVersions.value
+    .filter(v => v.appId === appId)
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+}
+
+function getVersionEnvironments(app: any, versionId: string) {
+  // Find all environments where this version is deployed for this app
+  return (app.environments || [])
+    .filter(env => env.deployment && env.deployment.version && env.deployment.version.id === versionId)
+    .map(env => env)
+}
+
+function getAppFeatures(appId: string) {
+  // Features with this app in their applicationIds
+  return allFeatures.value.filter((f: any) =>
+    (f.applications || []).some((a: any) => a.id === appId)
+  )
 }
 </script> 
